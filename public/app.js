@@ -98,9 +98,28 @@ const updateRefreshAuthBtn = () => {
   if (btn) btn.classList.toggle('hidden', !session.tokenSN || !session.vtokenSecret);
 };
 
+const formatPhone = (digits) => {
+  // Format up to 10 digits as "XXX XXX XX XX"
+  const d = digits.slice(0, 10);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)} ${d.slice(3)}`;
+  if (d.length <= 8) return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
+  return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 8)} ${d.slice(8)}`;
+};
+
+const attachPhoneFormatter = (el) => {
+  el.addEventListener('input', () => {
+    const digits = digitsOnly(el.value);
+    const formatted = formatPhone(digits);
+    if (el.value !== formatted) el.value = formatted;
+  });
+};
+
 window.addEventListener('DOMContentLoaded', () => {
   updateRefreshAuthBtn();
   tryRestoreSession();
+  attachPhoneFormatter($('phoneInput'));
+  attachPhoneFormatter($('clientPhone'));
 });
 
 // ─── Auth UI Helpers ───
