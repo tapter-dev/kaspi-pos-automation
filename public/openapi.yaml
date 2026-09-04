@@ -1,0 +1,401 @@
+openapi: 3.1.0
+info:
+  title: Kaspi Automation API
+  version: 1.0.0
+  description: Tenant-isolated API for Kaspi QR payments, phone invoices, recurring schedules, cancellation, refunds, and safe sandbox simulation.
+servers:
+  - url: /api/v1
+security:
+  - bearerApiKey: []
+paths:
+  /account:
+    get:
+      operationId: getAccount
+      summary: Get the business associated with the API key
+      responses:
+        '200':
+          description: Business account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Account' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /payments:
+    post:
+      operationId: createPayment
+      summary: Create a QR payment or phone invoice
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePayment' }
+      responses:
+        '201': { $ref: '#/components/responses/Payment' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '502': { $ref: '#/components/responses/ProviderError' }
+    get:
+      operationId: listPayments
+      summary: List recent payments
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Payment' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /payments/{paymentId}:
+    get:
+      operationId: getPayment
+      summary: Get a payment
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+      responses:
+        '200': { $ref: '#/components/responses/Payment' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      operationId: updatePaymentNote
+      summary: Update the private internal note
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [internalComment]
+              properties:
+                internalComment: { type: [string, 'null'], maxLength: 255 }
+      responses:
+        '200': { $ref: '#/components/responses/Payment' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /payments/{paymentId}/cancel:
+    post:
+      operationId: cancelPayment
+      summary: Cancel a pending phone invoice
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+      responses:
+        '200': { $ref: '#/components/responses/Payment' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /payments/{paymentId}/refunds:
+    post:
+      operationId: createRefund
+      summary: Fully or partially refund a paid payment
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount: { type: number, exclusiveMinimum: 0, maximum: 999999999 }
+      responses:
+        '201':
+          description: Refund accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Refund' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /payments/{paymentId}/simulate-status:
+    post:
+      operationId: simulatePaymentStatus
+      summary: Simulate a final payment state in Test mode
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [paid, failed, expired, cancelled] }
+      responses:
+        '200': { $ref: '#/components/responses/Payment' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /subscriptions:
+    get:
+      operationId: listSubscriptions
+      summary: List recurring payment schedules
+      responses:
+        '200':
+          description: Recurring schedules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Subscription' } }
+    post:
+      operationId: createSubscription
+      summary: Create a recurring phone-invoice schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateSubscription' }
+      responses:
+        '201':
+          description: Recurring schedule
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Subscription' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /subscriptions/{subscriptionId}:
+    get:
+      operationId: getSubscription
+      summary: Get a recurring schedule
+      parameters:
+        - $ref: '#/components/parameters/SubscriptionId'
+      responses:
+        '200':
+          description: Recurring schedule
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Subscription' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      operationId: updateSubscription
+      summary: Update a recurring schedule
+      parameters:
+        - $ref: '#/components/parameters/SubscriptionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateSubscription' }
+      responses:
+        '200':
+          description: Updated recurring schedule
+  /subscriptions/{subscriptionId}/pause:
+    post:
+      operationId: pauseSubscription
+      summary: Pause future invoices
+      parameters: [{ $ref: '#/components/parameters/SubscriptionId' }]
+      responses: { '200': { description: Paused schedule }, '409': { $ref: '#/components/responses/Conflict' } }
+  /subscriptions/{subscriptionId}/resume:
+    post:
+      operationId: resumeSubscription
+      summary: Resume future invoices
+      parameters: [{ $ref: '#/components/parameters/SubscriptionId' }]
+      responses: { '200': { description: Active schedule }, '409': { $ref: '#/components/responses/Conflict' } }
+  /subscriptions/{subscriptionId}/cancel:
+    post:
+      operationId: cancelSubscription
+      summary: Permanently cancel a recurring schedule
+      parameters: [{ $ref: '#/components/parameters/SubscriptionId' }]
+      responses: { '200': { description: Cancelled schedule }, '409': { $ref: '#/components/responses/Conflict' } }
+  /subscriptions/{subscriptionId}/invoices:
+    get:
+      operationId: listSubscriptionInvoices
+      summary: List generated invoice cycles
+      parameters: [{ $ref: '#/components/parameters/SubscriptionId' }]
+      responses: { '200': { description: Invoice cycles } }
+components:
+  securitySchemes:
+    bearerApiKey:
+      type: http
+      scheme: bearer
+      bearerFormat: kpa_live
+      description: API key created in the customer dashboard.
+  parameters:
+    PaymentId:
+      name: paymentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Unique key retained for 24 hours. Reusing it with different input returns 409.
+      schema: { type: string, minLength: 8, maxLength: 200 }
+    SubscriptionId:
+      name: subscriptionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    Account:
+      type: object
+      required: [id, slug, name, status, timezone, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        status: { type: string, enum: [active, suspended, closed] }
+        timezone: { type: string, example: Asia/Almaty }
+        created_at: { type: string, format: date-time }
+    CreatePayment:
+      type: object
+      required: [method, amount]
+      properties:
+        method: { type: string, enum: [qr, invoice] }
+        amount: { type: number, exclusiveMinimum: 0, maximum: 999999999 }
+        currency: { type: string, const: KZT, default: KZT }
+        externalOrderId: { type: string, maxLength: 200 }
+        description: { type: string, maxLength: 500 }
+        customerPhone:
+          type: string
+          pattern: '^7?\d{10}$'
+          description: Required when method is invoice.
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        metadata: { type: object, additionalProperties: true }
+    Payment:
+      type: object
+      required: [id, method, amount, currency, status, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        method: { type: string, enum: [qr, invoice] }
+        amount: { type: number }
+        currency: { type: string, const: KZT }
+        externalOrderId: { type: [string, 'null'] }
+        description: { type: [string, 'null'] }
+        customerPhone: { type: [string, 'null'] }
+        status:
+          type: string
+          enum: [created, requires_customer_action, pending, paid, failed, expired, cancelled, unknown, partially_refunded, refunded]
+        providerStatus: { type: [string, 'null'] }
+        qrToken: { type: [string, 'null'], format: uri }
+        qrOriginalToken: { type: [string, 'null'], format: uri }
+        qrCodeDataUrl: { type: [string, 'null'], description: Present on QR payment creation responses. }
+        receiptUrl: { type: [string, 'null'], format: uri }
+        metadata: { type: object, additionalProperties: true }
+        expiresAt: { type: [string, 'null'], format: date-time }
+        paidAt: { type: [string, 'null'], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    Refund:
+      type: object
+      required: [id, paymentId, amount, currency, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        paymentId: { type: string, format: uuid }
+        amount: { type: number }
+        currency: { type: string, const: KZT }
+        status: { type: string, enum: [succeeded, failed] }
+        createdAt: { type: string, format: date-time }
+    CreateSubscription:
+      type: object
+      required: [customerPhone, amount, billingPeriod, firstPaymentAt]
+      properties:
+        customerName: { type: string, maxLength: 200 }
+        customerPhone: { type: string, pattern: '^7\d{10}$' }
+        amount: { type: number, exclusiveMinimum: 0 }
+        billingPeriod: { type: string, enum: [daily, weekly, biweekly, monthly, quarterly, yearly] }
+        billingDay: { type: integer, minimum: 1, maximum: 28 }
+        billingTime: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+        firstPaymentAt: { type: string, format: date-time }
+        totalCycles: { type: [integer, 'null'], minimum: 1 }
+        maxRetryAttempts: { type: integer, minimum: 0, maximum: 10, default: 3 }
+        retryIntervalHours: { type: integer, minimum: 1, maximum: 168, default: 24 }
+        gracePeriodDays: { type: integer, minimum: 0, maximum: 30, default: 3 }
+        description: { type: string, maxLength: 60 }
+    Subscription:
+      type: object
+      required: [id, customerPhone, amount, currency, billingPeriod, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        customerName: { type: [string, 'null'] }
+        customerPhone: { type: string }
+        amount: { type: number }
+        currency: { type: string, const: KZT }
+        billingPeriod: { type: string }
+        billingDay: { type: [integer, 'null'] }
+        billingTime: { type: string }
+        status: { type: string, enum: [active, paused, completed, cancelled] }
+        nextPaymentAt: { type: [string, 'null'], format: date-time }
+        totalCycles: { type: [integer, 'null'] }
+        generatedCycles: { type: integer }
+        successfulCycles: { type: integer }
+        createdAt: { type: string, format: date-time }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        requestId: { type: string }
+  responses:
+    Payment:
+      description: Payment
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data: { $ref: '#/components/schemas/Payment' }
+    BadRequest:
+      description: Invalid request
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: API key missing or invalid
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: API key scope is insufficient
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Resource not found in this tenant
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: State or idempotency conflict
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    ProviderError:
+      description: Kaspi rejected or could not complete the operation
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+webhooks:
+  paymentEvent:
+    post:
+      summary: Payment status event sent to a configured endpoint
+      parameters:
+        - { name: X-Webhook-Id, in: header, required: true, schema: { type: string, format: uuid } }
+        - { name: X-Webhook-Delivery, in: header, required: true, schema: { type: string, format: uuid } }
+        - { name: X-Webhook-Timestamp, in: header, required: true, schema: { type: string } }
+        - { name: X-Webhook-Signature, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id: { type: string, format: uuid }
+                type: { type: string, example: payment.paid }
+                createdAt: { type: string, format: date-time }
+                data: { type: object, additionalProperties: true }
+      responses:
+        '200': { description: Acknowledge receipt with any 2xx status. }

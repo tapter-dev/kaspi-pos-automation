@@ -26,7 +26,12 @@
     "node": ">=20.6.0"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "node --import ./src/instrumentation.js server.js",
+    "worker": "node --import ./src/instrumentation.js worker.js",
+    "dev": "node --watch --import ./src/instrumentation.js server.js",
+    "db:migrate": "node scripts/migrate.js",
+    "tenant:create": "node scripts/create-tenant.js",
+    "admin:promote": "node scripts/promote-admin.js",
     "test": "node --test test/**/*.test.js",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -34,13 +39,30 @@
     "regen:device": "node scripts/regen-device.js"
   },
   "dependencies": {
+    "@opentelemetry/auto-instrumentations-node": "^0.80.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.222.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.222.0",
+    "@opentelemetry/sdk-metrics": "^2.11.0",
+    "@opentelemetry/sdk-node": "^0.222.0",
+    "bullmq": "^6.3.4",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.3.1",
     "express": "^4.18.2",
-    "node-fetch": "^2.7.0"
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "ioredis": "^6.0.0",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^10.0.0",
+    "pg": "^8.23.0",
+    "qrcode": "^1.5.4",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.3.0",
     "prettier": "^3.8.3"
+  },
+  "overrides": {
+    "qs": "6.16.0"
   }
 }

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Platform admin</title>
+    <link rel="stylesheet" href="/dashboard.css" />
+  </head>
+  <body>
+    <main class="content">
+      <header>
+        <div>
+          <p class="eyebrow">Platform operations</p>
+          <h1>Customer workspaces</h1>
+        </div>
+        <a href="/dashboard">Customer dashboard</a>
+      </header>
+      <article class="panel"><h2>Queue health</h2><p id="queueHealth" class="muted">Loading…</p></article>
+      <article class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Created</th>
+                <th>Status</th>
+                <th>Members</th>
+                <th>Kaspi</th>
+                <th>Payments</th>
+                <th>Volume</th>
+                <th>Webhook issues</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="tenants"></tbody>
+          </table>
+        </div>
+      </article>
+    </main>
+    <script type="module" src="/admin.js"></script>
+  </body>
+</html>

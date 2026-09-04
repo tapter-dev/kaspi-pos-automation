@@ -1,30 +1,34 @@
-import express from 'express';
-import path from 'path';
-import { PORT, ROOT_DIR } from './src/config.js';
-import authRoutes from './src/routes/auth.js';
-import invoiceRoutes from './src/routes/invoice.js';
-import qrRoutes from './src/routes/qr.js';
-import historyRoutes from './src/routes/history.js';
-import refundRoutes from './src/routes/refund.js';
-import sessionRoutes from './src/routes/session.js';
-import { startPolling } from './src/polling.js';
+import { PORT } from './src/config.js';
+import { createApp } from './src/app.js';
+import { startPolling, stopPolling } from './src/polling.js';
+import { closePool } from './src/database/client.js';
+import { closeQueues } from './src/queue/client.js';
 import 'dotenv/config';
 
-const app = express();
+const app = createApp();
 
-app.use(express.json());
-app.use(express.static(path.join(ROOT_DIR, 'public')));
-
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
-
-app.use('/api/auth', authRoutes);
-app.use('/api/invoice', invoiceRoutes);
-app.use('/api/qr', qrRoutes);
-app.use('/api/history', historyRoutes);
-app.use('/api/refund', refundRoutes);
-app.use('/api/session', sessionRoutes);
-
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n  🟢 Kaspi Pay App running at http://localhost:${PORT}\n`);
-  startPolling();
+  if (app.locals.legacyApiEnabled) startPolling();
 });
+
+let shuttingDown = false;
+const shutdown = () => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  stopPolling();
+  const forceTimer = setTimeout(() => process.exit(1), 10_000);
+  forceTimer.unref();
+  server.close(async () => {
+    try {
+      await Promise.all([closeQueues(), closePool()]);
+      process.exit(0);
+    } catch (err) {
+      console.error('Graceful shutdown failed:', err);
+      process.exit(1);
+    }
+  });
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

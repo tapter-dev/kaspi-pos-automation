@@ -1,0 +1,22 @@
+:root { --blue:#0d3f91; --ink:#17213a; --muted:#697386; --line:#e1e5eb; }
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+body { min-height:100vh; margin:0; color:var(--ink); background:linear-gradient(160deg,#f8fbff,#eef2f8); font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif; }
+header { display:flex; align-items:center; justify-content:space-between; max-width:760px; margin:0 auto; padding:22px; }
+.brand { display:flex; align-items:center; gap:9px; font-weight:800; }
+.brand span { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; color:white; background:var(--blue); }
+select,button { padding:10px 13px; border:1px solid var(--line); border-radius:10px; background:white; font:inherit; }
+main { display:grid; place-items:center; padding:40px 18px 80px; }
+.card { width:min(520px,100%); padding:36px; text-align:center; border:1px solid var(--line); border-radius:22px; background:white; box-shadow:0 24px 70px #12234817; }
+.eyebrow { margin:0 0 10px; color:var(--blue); font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+h1 { margin:0 0 16px; font-size:27px; line-height:1.2; }
+.amount { margin:24px 0; font-size:42px; font-weight:850; letter-spacing:-.03em; }
+.amount.small { margin:12px 0; font-size:28px; }
+.muted { color:var(--muted); }
+.primary { display:block; width:100%; margin:24px 0 14px; padding:14px 18px; border-color:var(--blue); color:white; background:var(--blue); font-weight:750; text-decoration:none; cursor:pointer; }
+#paymentQr { width:min(340px,100%); padding:12px; border:1px solid var(--line); border-radius:16px; }
+#shortCode { display:block; margin-top:18px; color:var(--muted); font-family:ui-monospace,monospace; }
+.spinner { width:42px; height:42px; margin:0 auto; border:4px solid #dce5f2; border-top-color:var(--blue); border-radius:50%; animation:spin .8s linear infinite; }
+.error-mark { display:grid; place-items:center; width:58px; height:58px; margin:0 auto 18px; border-radius:50%; color:white; background:#c53b4e; font-size:30px; font-weight:800; }
+@keyframes spin { to { transform:rotate(360deg); } }
+@media (max-width:560px) { main { padding-top:18px; } .card { padding:26px 20px; } .amount { font-size:36px; } }

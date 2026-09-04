@@ -1,0 +1,84 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: kaspi_automation
+      POSTGRES_USER: kaspi_admin
+      POSTGRES_PASSWORD: kaspi-admin-local-only
+    ports:
+      - '55432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-app-role.sql:/docker-entrypoint-initdb.d/01-app-role.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U kaspi_admin -d kaspi_automation']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    profiles: ['application']
+    build: .
+    command: npm run db:migrate
+    env_file: .env
+    environment:
+      DATABASE_MIGRATION_URL: postgres://kaspi_admin:kaspi-admin-local-only@postgres:5432/kaspi_automation
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    profiles: ['application']
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://kaspi_app:kaspi-app-local-only@postgres:5432/kaspi_automation
+      REDIS_URL: redis://redis:6379
+      DATA_DIR: /app/data
+      TRUST_PROXY: 'true'
+    ports:
+      - '3000:3000'
+    volumes:
+      - runtime-data:/app/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    profiles: ['application']
+    build: .
+    command: npm run worker
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://kaspi_app:kaspi-app-local-only@postgres:5432/kaspi_automation
+      REDIS_URL: redis://redis:6379
+      DATA_DIR: /app/data
+    volumes:
+      - runtime-data:/app/data
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  redis-data:
+  runtime-data:

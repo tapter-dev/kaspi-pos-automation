@@ -1,158 +1,105 @@
-# Kaspi POS Automation
+# Kaspi Automation
 
-Автоматизация платежей для POS-систем через Kaspi Pay API. Проект предоставляет серверное приложение и веб-интерфейс для создания счетов, генерации QR-кодов, просмотра истории транзакций и оформления возвратов.
+A multi-tenant payment automation platform for startups and small businesses using Kaspi Pay. It includes a customer dashboard, scoped API keys, QR payments and phone invoices, refunds, durable status polling, signed webhooks, team roles, audit logs, and a platform-operations dashboard.
 
-## Архитектура
+> This is an independent integration, not an official Kaspi product. Use it only for merchant accounts you are authorized to operate and complete legal/security review before processing real payments.
 
-```
-┌──────────────┐       ┌──────────────────┐       ┌──────────────────┐
-│  Web UI      │◄─────►│  Express Server   │◄─────►│  Kaspi Pay API   │
-│  (public/)   │       │  (server.js)      │       │  (entrance/      │
-│              │       │                   │       │   mtoken/qrpay)  │
-└──────────────┘       └──────────────────┘       └──────────────────┘
-                              │
-                    ┌─────────┴─────────┐
-                    │   src/            │
-                    │  ├─ config.js     │  Keypair, device, constants
-                    │  ├─ crypto.js     │  ECDH, ECDSA, TOTP, AES
-                    │  ├─ helpers.js    │  Fetch wrapper, headers
-                    │  ├─ session.js    │  Stateless session factory
-                    │  ├─ logger.js     │  File & console logging
-                    │  ├─ polling.js    │  Payment status polling
-                    │  ├─ webhookStore  │  Webhook management
-                    │  └─ routes/       │  API route handlers
-                    │     ├─ auth.js    │  SMS auth (3-step)
-                    │     ├─ invoice.js │  Invoice creation
-                    │     ├─ qr.js      │  QR code generation
-                    │     ├─ history.js │  Transaction history
-                    │     ├─ refund.js  │  Refund processing
-                    │     └─ session.js │  Session management
-                    └───────────────────┘
-```
+## What is included
 
-Сервер **stateless после авторизации** — данные сессии (зашифрованный `vtokenSecret`, `tokenSN`, `profileId`) хранятся на стороне клиента и передаются через заголовки.
+- Customer dashboard at `/dashboard`: account registration/login, workspace switching, team invitations, server-side Kaspi SMS connection, payments, API keys, webhooks, delivery history, and audit logs.
+- Platform dashboard at `/admin`: tenant status, payment/connection health, queue metrics, and suspension/reactivation.
+- Public tenant API at `/api/v1`: bearer API-key authentication, scopes, persisted payments/refunds, and 24-hour idempotency.
+- PostgreSQL persistence with forced row-level security and separate migration/runtime roles.
+- BullMQ/Redis workers for payment polling and webhook delivery, with database reconciliation after restarts.
+- AES-256-GCM Kaspi credential encryption, hashed API/session tokens, role authorization, rate limits, request IDs, log redaction, webhook SSRF defenses, and audit events.
+- Legacy single-merchant demo routes and `/` interface remain available for compatibility.
 
-### Webhooks
+## Local setup
 
-Сервер автоматически отслеживает статусы созданных QR- и invoice-платежей (polling каждые 3 сек.) и отправляет HTTP POST-уведомления на указанные URL при изменении статуса.
-
-- 📡 **События:** `payment.success` · `payment.failed` · `payment.expired` · `payment.lost`
-- ⚙️ **Настройка:** файл `webhooks.json` (см. [`webhooks.example.json`](./webhooks.example.json))
-- 🔐 **Подпись:** HMAC SHA-256
-- 🔄 **Retry:** до 3 попыток с нарастающей задержкой
-
-> 📖 Подробнее — в [документации API](./docs/API.md#webhooks--уведомления).
-
-## Требования
-
-- Node.js ≥ 20.6
-
-## Быстрый старт
+Requirements: Node.js 20.6+ and Docker.
 
 ```bash
-# 1. Клонировать репозиторий
-git clone https://github.com/tapter-dev/kaspi-pos-automation.git
-cd kaspi-pos-automation
+npm ci
+cp .env.example .env
+# Fill three independent values:
+# TOKEN_SECRET_KEY=$(openssl rand -hex 32)
+# API_KEY_PEPPER=$(openssl rand -hex 32)
+# DASHBOARD_SESSION_SECRET=$(openssl rand -hex 32)
 
-# 2. Установить зависимости
-npm install
-
-# 3. Создать .env с ключом шифрования
-echo "TOKEN_SECRET_KEY=$(openssl rand -hex 32)" > .env
-
-# 4. (Опционально) Настроить вебхуки
-cp webhooks.example.json webhooks.json
-# Отредактируйте webhooks.json под свои нужды
-
-# 5. Запустить сервер
+docker compose up -d
+npm run db:migrate
 npm start
 ```
 
-При первом запуске автоматически генерируются `keypair.json` и `device.json`.
-
-## Переменные окружения
-
-| Переменная         | Описание                                 | По умолчанию               | Обязательная |
-| ------------------ | ---------------------------------------- | -------------------------- | ------------ |
-| `TOKEN_SECRET_KEY` | 64-символьная hex-строка для AES-256-GCM | —                          | Да           |
-| `PORT`             | Порт сервера                             | `3000`                     | Нет          |
-| `APP_VERSION`      | Версия приложения Kaspi Pay              | `4.110.1`                  | Нет          |
-| `APP_BUILD`        | Номер сборки                             | `1099`                     | Нет          |
-| `APP_PLATFORM`     | Платформа устройства                     | `iOS`                      | Нет          |
-| `APP_PLATFORM_VER` | Версия ОС                                | `18.5`                     | Нет          |
-| `APP_LOCALE`       | Локаль                                   | `ru-RU`                    | Нет          |
-| `APP_MODEL`        | Модель устройства                        | `iPhone17,3`               | Нет          |
-| `APP_BRAND`        | Бренд устройства                         | `Apple`                    | Нет          |
-| `APP_DEVICE_NAME`  | Имя устройства                           | `iPhone`                   | Нет          |
-| `APP_SCREEN_W`     | Ширина экрана                            | `393.0`                    | Нет          |
-| `APP_SCREEN_H`     | Высота экрана                            | `852.0`                    | Нет          |
-| `APP_CFNETWORK`    | Версия CFNetwork                         | `CFNetwork/3826.500.131`   | Нет          |
-| `APP_DARWIN`       | Версия Darwin                            | `Darwin/24.5.0`            | Нет          |
-
-> ⚠️ Параметры `APP_*` соответствуют реальному клиенту Kaspi Pay. API Kaspi валидирует эти значения и может отклонить запросы с неизвестными параметрами. Обновляйте их при выходе новой версии приложения.
-
-## Ротация ключей
+In a second terminal:
 
 ```bash
-npm run regen:keypair   # Перегенерация ECDSA-ключей
-npm run regen:device    # Перегенерация идентификатора устройства
+npm run worker
 ```
 
-Старые файлы сохраняются как `.bak`. После ротации существующие сессии становятся недействительными.
+Open `http://localhost:3000/dashboard`. On first startup, the shared `DATA_DIR` receives a Kaspi device identity and cryptographic keypair. Keep that directory persistent and private.
 
-## Демо-интерфейс (`public/`)
+To run the complete containerized application profile:
 
-В папке `public/` находится встроенный веб-интерфейс (SPA), который запускается автоматически вместе с сервером и доступен по адресу `http://localhost:3000`.
+```bash
+docker compose --profile application up --build
+```
 
-**Возможности интерфейса:**
+## API example
 
-- 🔐 **Авторизация** — вход по номеру телефона кассира Kaspi Pay через 3-шаговый SMS-flow (ввод номера → OTP-код → завершение)
-- 🧾 **Выставление счёта** — создание счёта по номеру телефона клиента с указанием суммы и комментария
-- 📱 **QR-оплата** — генерация QR-кода для оплаты с отслеживанием статуса в реальном времени
-- 📋 **История операций** — просмотр списка транзакций с детализацией
-- 💰 **Продажи и возвраты** — статистика продаж и оформление возвратов
+Create a key under **Dashboard → Developers**, then:
 
-**Файлы:**
+```bash
+curl -X POST http://localhost:3000/api/v1/payments \
+  -H 'Authorization: Bearer kpa_live_…' \
+  -H 'Idempotency-Key: order-1001-attempt-1' \
+  -H 'Content-Type: application/json' \
+  -d '{"method":"qr","amount":1250,"externalOrderId":"ORDER-1001"}'
+```
 
-| Файл | Описание |
+The human-readable API reference is at `/api-docs`; the OpenAPI 3.1 document is at `/openapi.yaml`.
+
+## Roles
+
+| Role | Access |
 | --- | --- |
-| `public/index.html` | HTML-разметка и стили интерфейса |
-| `public/app.js` | Клиентская логика (API-вызовы, управление состоянием) |
+| owner | Full workspace, team-role, connection, developer, payment, and audit access |
+| admin | Workspace administration, connection, developer, payment, and audit access |
+| developer | API keys, webhooks, and payments |
+| operator | Read/write payments |
+| viewer | Read-only payments and workspace status |
 
-> Интерфейс предназначен для демонстрации и тестирования API. Для продакшена рекомендуется использовать собственный фронтенд.
-
-## Единый QR — приём платежей от других банков
-
-При создании QR-кода через `/api/qr/create` в ответе возвращаются два поля:
-
-- **`QrToken`** — ссылка вида `https://pay.kaspi.kz/pay/...`, работает только в приложении Kaspi.
-- **`QrOriginalToken`** — оригинальная ссылка вида `https://qr.kaspi.kz/...`, поддерживает оплату через **Единый QR** (приложения других банков).
-
-Чтобы клиенты могли оплачивать через приложения других банков, генерируйте QR-код из значения **`QrOriginalToken`**, а не из `QrToken`.
-
-## API документация
-
-Подробная документация по всем эндпоинтам API: [`docs/API.md`](./docs/API.md).
-
-📗 Документация также доступна на казахском языке: [`README.kk.md`](./README.kk.md) | [`docs/API.kk.md`](./docs/API.kk.md)
-
-## Разработка
+Promote a registered operator to the platform-admin view with:
 
 ```bash
-# Линтинг
-npm run lint
-
-# Форматирование
-npm run format
-
-# Тесты
-npm test
+npm run admin:promote -- owner@example.com
 ```
 
-## Лицензия
+## Commands
 
-Этот проект распространяется под лицензией [MIT](./LICENSE).
+```bash
+npm run db:migrate       # forward-only PostgreSQL migrations
+npm run tenant:create -- acme "Acme LLP"
+npm run admin:promote -- owner@example.com
+npm run lint
+npm test
+npm run worker
+npm run regen:keypair    # invalidates associated Kaspi sessions
+npm run regen:device     # invalidates associated Kaspi sessions
+```
 
-## Участие в проекте
+## Documentation
 
-Мы приветствуем вклад сообщества! Пожалуйста, ознакомьтесь с [CONTRIBUTING.md](./CONTRIBUTING.md) перед созданием pull request.
+- [Architecture](docs/SAAS_FOUNDATION.md)
+- [Production deployment](docs/DEPLOYMENT.md)
+- [Operations runbook](docs/RUNBOOK.md)
+- [Security model](docs/SECURITY.md)
+- [Legacy API documentation](docs/API.md)
+
+## Production notes
+
+Set the exact HTTPS `APP_ORIGIN`, keep `TRUST_PROXY=false` unless requests arrive through a trusted proxy, configure SMTP for account email, run migrations with `DATABASE_MIGRATION_URL` only, and run API/worker processes with the restricted `DATABASE_URL`. Use a secret manager and encrypted PostgreSQL/`DATA_DIR` backups. See the deployment guide for release order and recovery requirements.
+
+## License
+
+[MIT](LICENSE)

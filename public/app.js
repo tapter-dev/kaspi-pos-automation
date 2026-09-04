@@ -423,12 +423,6 @@ const startQrCountdown = (seconds) => {
   qrCountdownTimer = setInterval(tick, 1000);
 };
 
-const generateQrSvg = (text, size = 256) => {
-  // Simple QR placeholder using a data URL image via an API
-  // For production, use a proper QR library; here we use a public API fallback
-  return `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}" alt="QR Code" style="max-width:100%;border-radius:8px;">`;
-};
-
 const createQr = async () => {
   const amount = $('qrAmount').value;
   if (!amount) return alert('Введите сумму');
@@ -448,7 +442,7 @@ const createQr = async () => {
       const pollInterval = (parseInt(options.qrCodeScanEventPollingInterval) || 3) * 1000;
       const waitTimeout = parseInt(options.qrCodeScanWaitTimeout) || 180;
 
-      $('qrCodeContainer').innerHTML = generateQrSvg(resp.Data.QrOriginalToken);
+      $('qrCodeContainer').innerHTML = `<img src="${resp.Data.QrDataUrl}" alt="QR Code" style="max-width:100%;border-radius:8px;">`;
       $('qrStatus').className = 'status-bar status-info';
       $('qrStatus').textContent = 'Ожидание сканирования...';
       $('qrResult').classList.remove('hidden');

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kaspi Automation Dashboard</title>
+    <link rel="stylesheet" href="/dashboard.css" />
+  </head>
+  <body>
+    <main id="authView" class="auth-shell">
+      <div class="auth-language"><button class="language-button" data-language-toggle>🇬🇧 EN</button></div>
+      <section class="auth-card">
+        <div class="brand"><span>K</span> Kaspi Automation</div>
+        <h1 id="authTitle" data-i18n="welcome">Welcome back</h1>
+        <p id="authSubtitle" data-i18n="signInSubtitle">Sign in to manage payments and integrations.</p>
+        <form id="authForm">
+          <div id="registerFields" hidden>
+            <label><span data-i18n="yourName">Your name</span><input id="displayName" autocomplete="name" /></label>
+            <div id="tenantRegistrationFields">
+              <label><span data-i18n="businessName">Business name</span><input id="tenantName" autocomplete="organization" /></label>
+              <label><span data-i18n="businessSlug">Business slug</span><input id="tenantSlug" placeholder="my-business" /></label>
+            </div>
+          </div>
+          <label><span data-i18n="email">Email</span><input id="email" type="email" autocomplete="email" required /></label>
+          <label><span data-i18n="password">Password</span><input id="password" type="password" autocomplete="current-password" minlength="12" required /></label>
+          <label id="mfaLoginField" hidden><span data-i18n="authCode">Authenticator code</span><input id="mfaLoginCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" /></label>
+          <p id="authError" class="error" hidden></p>
+          <button type="submit" class="primary" data-i18n="signIn">Sign in</button>
+        </form>
+        <form id="resetForm" hidden>
+          <label><span data-i18n="newPassword">New password</span><input id="resetPassword" type="password" minlength="12" autocomplete="new-password" required /></label>
+          <button type="submit" class="primary" data-i18n="setPassword">Set new password</button>
+        </form>
+        <button id="toggleAuth" class="link" data-i18n="createAccount">Create a new business account</button>
+        <button id="forgotPassword" class="link" data-i18n="forgotPassword">Forgot password?</button>
+      </section>
+      <div class="language-menu" data-language-menu hidden>
+        <button data-language="ru">🇷🇺 <span>Русский</span></button>
+        <button data-language="kk">🇰🇿 <span>Қазақша</span></button>
+        <button data-language="en">🇬🇧 <span>English</span></button>
+      </div>
+    </main>
+
+    <div id="appView" class="app" hidden>
+      <aside>
+        <div class="brand"><span>K</span> Kaspi Automation</div>
+        <nav>
+          <button data-page="overview" class="active"><i>⌂</i><span data-i18n="navHome">Home</span></button>
+          <button data-page="payments" data-mode="list"><i>▤</i><span data-i18n="navInvoices">Invoices</span></button>
+          <button data-page="payments" data-mode="create"><i>＋</i><span data-i18n="navCreate">Create invoice</span></button>
+          <button data-page="recurring"><i>↻</i><span data-i18n="navRecurring">Recurring</span></button>
+          <button data-page="refunds"><i>↩</i><span data-i18n="navRefunds">Refunds</span></button>
+          <button data-page="printQr"><i>▣</i><span data-i18n="navPrintQr">QR for printing</span></button>
+          <div class="nav-label" data-i18n="navDevelopersLabel">Developers</div>
+          <button data-page="developers"><i>⌘</i><span data-i18n="navApi">API</span></button>
+          <div class="nav-label" data-i18n="navBusinessLabel">Business</div>
+          <button data-page="team" data-mode="staff"><i>♙</i><span data-i18n="navStaff">Staff</span></button>
+          <button data-page="team" data-mode="access"><i>◉</i><span data-i18n="navAccess">Who has access</span></button>
+          <button data-page="kaspi"><i>⚙</i><span data-i18n="navSettings">Settings</span></button>
+          <button data-page="plan"><i>▱</i><span data-i18n="navPlan">My plan</span></button>
+          <button data-page="partners"><i>♧</i><span data-i18n="navPartners">For partners</span></button>
+          <button data-page="guides"><i>?</i><span data-i18n="navGuides">Help & guides</span></button>
+          <button data-page="audit"><i>◷</i><span data-i18n="navAudit">Audit log</span></button>
+        </nav>
+        <div class="account">
+          <strong id="tenantLabel"></strong>
+          <select id="tenantSwitcher" aria-label="Switch business" hidden></select>
+          <small id="userLabel"></small>
+          <button id="logoutButton" class="link" data-i18n="signOut">Sign out</button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <header class="workspace-header">
+          <div><p class="eyebrow" data-i18n="workspace">Merchant workspace</p><h1 id="pageTitle" data-i18n="navHome">Home</h1></div>
+          <div class="header-actions"><span id="workModeChip" class="status-chip">● LIVE</span><span id="roleBadge" class="badge"></span><button class="language-button" data-language-toggle>🇬🇧 EN</button></div>
+        </header>
+
+        <section id="overviewPage" class="page">
+          <div id="setupBanner" class="setup-banner" hidden><div><strong data-i18n="connectBannerTitle">Connect Kaspi to accept payments</strong><p data-i18n="connectBannerText">The guided setup takes about 2–3 minutes.</p></div><button class="primary" data-open-kaspi data-i18n="connectNow">Connect now</button></div>
+          <div class="period-tabs"><button class="active" data-period="today" data-i18n="today">Today</button><button data-period="week" data-i18n="week">Week</button><button data-period="month" data-i18n="month">Month</button><button data-period="year" data-i18n="year">Year</button></div>
+          <div class="metrics">
+            <article><span id="volumePeriodLabel" data-i18n="volumeToday">Volume today</span><strong id="volumeToday">₸0</strong></article>
+            <article><span id="paymentsPeriodLabel" data-i18n="paymentsToday">Invoices today</span><strong id="paymentsToday">0</strong></article>
+            <article><span data-i18n="paid">Paid</span><strong id="paidCount">0</strong></article>
+            <article><span data-i18n="needsAttention">Needs attention</span><strong id="problemCount">0</strong></article>
+          </div>
+          <div class="grid-two"><article class="panel"><h2 data-i18n="kaspiConnection">Kaspi connection</h2><div id="overviewConnection"></div></article><article class="panel"><h2 data-i18n="webhookHealth">Webhook health</h2><div id="overviewWebhooks"></div></article></div>
+        </section>
+
+        <section id="paymentsPage" class="page" hidden>
+          <article id="paymentCreatePanel" class="panel"><h2 data-i18n="createPayment">Create payment</h2><p class="muted" data-i18n="createPaymentHelp">Send a phone invoice or create a Kaspi QR payment.</p><form id="paymentForm" class="form-grid"><label><span data-i18n="method">Method</span><select id="paymentMethod"><option value="qr" data-i18n="qrPayment">QR payment</option><option value="invoice" data-i18n="phoneInvoice">Phone invoice</option></select></label><label><span data-i18n="amountKzt">Amount, KZT</span><input id="paymentAmount" type="number" min="1" step="0.01" required /></label><label><span data-i18n="externalOrder">External order ID</span><input id="paymentOrder" placeholder="ORDER-1001" /></label><label><span data-i18n="customerPhone">Customer phone</span><input id="paymentPhone" placeholder="77001234567" /></label><label><span data-i18n="description">Description</span><input id="paymentDescription" maxlength="100" placeholder="Order payment" /></label><label><span data-i18n="internalNote">Private note</span><input id="paymentInternalComment" maxlength="255" placeholder="CRM customer or delivery details" /></label><button class="primary" type="submit" data-i18n="createPayment">Create payment</button></form><div id="createdPayment" class="secret" hidden></div></article>
+          <article id="paymentListPanel" class="panel">
+            <div class="panel-head"><div><h2 data-i18n="invoices">Invoices</h2><p class="muted" data-i18n="invoiceOperationsHelp">Search, reconcile, export and open every invoice.</p></div><div class="row-actions"><a id="exportPayments" class="button-link" href="#" data-i18n="exportCsv">Export CSV</a><button id="refreshPayments" data-i18n="refresh">Refresh</button></div></div>
+            <form id="paymentFilters" class="filter-bar">
+              <label><span data-i18n="dateFrom">From</span><input id="paymentDateFrom" type="date" /></label>
+              <label><span data-i18n="dateTo">To</span><input id="paymentDateTo" type="date" /></label>
+              <label><span data-i18n="dateBasis">Date basis</span><select id="paymentDateField"><option value="createdAt" data-i18n="createdDate">Created date</option><option value="paidAt" data-i18n="paidDate">Paid date</option></select></label>
+              <label><span data-i18n="status">Status</span><select id="paymentStatus"><option value="" data-i18n="allStatuses">All statuses</option><option value="pending">pending</option><option value="requires_customer_action">requires customer action</option><option value="paid">paid</option><option value="partially_refunded">partially refunded</option><option value="refunded">refunded</option><option value="failed">failed</option><option value="expired">expired</option><option value="cancelled">cancelled</option><option value="unknown">unknown</option></select></label>
+              <label class="filter-search"><span data-i18n="search">Search</span><input id="paymentSearch" type="search" maxlength="100" data-i18n-placeholder="invoiceSearchPlaceholder" placeholder="Order, phone, description or note" /></label>
+              <button class="primary" type="submit" data-i18n="applyFilters">Apply</button><button id="resetPaymentFilters" type="button" data-i18n="resetFilters">Reset</button>
+            </form>
+            <div class="table-wrap"><table><thead><tr><th data-i18n="created">Created</th><th data-i18n="order">Order</th><th data-i18n="customer">Customer</th><th data-i18n="description">Description</th><th data-i18n="method">Method</th><th data-i18n="status">Status</th><th data-i18n="amount">Amount</th><th data-i18n="actions">Actions</th></tr></thead><tbody id="paymentsBody"></tbody></table></div>
+            <div class="pagination"><button id="paymentsPrevious" type="button" data-i18n="previous">Previous</button><span id="paymentsPageLabel"></span><button id="paymentsNext" type="button" data-i18n="next">Next</button></div>
+          </article>
+        </section>
+
+        <section id="recurringPage" class="page" hidden>
+          <article class="panel"><div class="panel-head"><div><h2 data-i18n="recurringTitle">Recurring payment automation</h2><p class="muted" data-i18n="recurringText">Create a schedule and the worker will send each Kaspi invoice at the selected time. The customer still approves every payment in Kaspi.</p></div><button id="toggleRecurringForm" class="primary" data-i18n="createSubscription">Create schedule</button></div>
+            <form id="recurringForm" class="form-grid recurring-form" hidden>
+              <label><span data-i18n="subscriberName">Subscriber name</span><input id="recurringName" maxlength="200" /></label><label><span data-i18n="customerPhone">Customer phone</span><input id="recurringPhone" placeholder="77001234567" pattern="7[0-9]{10}" required /></label>
+              <label><span data-i18n="amountKzt">Amount, KZT</span><input id="recurringAmount" type="number" min="1" step="0.01" required /></label><label><span data-i18n="billingPeriod">Billing period</span><select id="recurringPeriod"><option value="daily" data-i18n="daily">Daily</option><option value="weekly" data-i18n="weekly">Weekly</option><option value="biweekly" data-i18n="biweekly">Every two weeks</option><option value="monthly" data-i18n="monthly">Monthly</option><option value="quarterly" data-i18n="quarterly">Quarterly</option><option value="yearly" data-i18n="yearly">Yearly</option></select></label>
+              <label id="recurringDayField" hidden><span data-i18n="billingDay">Billing day (1–28)</span><input id="recurringDay" type="number" min="1" max="28" /></label><label><span data-i18n="billingTime">Billing time (Almaty)</span><input id="recurringTime" type="time" min="06:00" max="22:00" value="09:00" required /></label>
+              <label><span data-i18n="firstPayment">First invoice</span><input id="recurringFirstAt" type="datetime-local" required /></label><label><span data-i18n="totalCycles">Number of invoices</span><input id="recurringCycles" type="number" min="1" max="1000" placeholder="Unlimited" /></label>
+              <label><span data-i18n="description">Description</span><input id="recurringDescription" maxlength="60" /></label><details class="advanced-settings"><summary data-i18n="retrySettings">Retry and grace settings</summary><div class="form-grid"><label><span data-i18n="maxRetries">Maximum retries</span><input id="recurringRetries" type="number" min="0" max="10" value="3" /></label><label><span data-i18n="retryEvery">Retry after, hours</span><input id="recurringRetryHours" type="number" min="1" max="168" value="24" /></label><label><span data-i18n="graceDays">Grace period, days</span><input id="recurringGrace" type="number" min="0" max="30" value="3" /></label></div></details>
+              <button class="primary" type="submit" data-i18n="createSubscription">Create schedule</button>
+            </form>
+          </article>
+          <article class="panel"><form id="recurringFilters" class="filter-bar recurring-filter"><label><span data-i18n="search">Search</span><input id="recurringSearch" type="search" /></label><label><span data-i18n="status">Status</span><select id="recurringStatus"><option value="" data-i18n="allStatuses">All statuses</option><option value="active">active</option><option value="paused">paused</option><option value="completed">completed</option><option value="cancelled">cancelled</option></select></label><button class="primary" data-i18n="applyFilters">Apply</button></form><div class="table-wrap"><table><thead><tr><th data-i18n="subscriberName">Subscriber</th><th data-i18n="amount">Amount</th><th data-i18n="billingPeriod">Period</th><th data-i18n="status">Status</th><th data-i18n="nextPayment">Next invoice</th><th data-i18n="successfulPayments">Paid</th><th data-i18n="actions">Actions</th></tr></thead><tbody id="recurringBody"></tbody></table></div></article>
+          <article id="recurringDetail" class="panel" hidden><div class="panel-head"><h2 id="recurringDetailTitle"></h2><button id="closeRecurringDetail" data-i18n="close">Close</button></div><div id="recurringDetailSummary" class="detail-grid"></div><h3 data-i18n="paymentHistory">Invoice history</h3><div id="recurringRuns"></div></article>
+        </section>
+
+        <section id="refundsPage" class="page" hidden><div class="metrics refund-metrics"><article><span data-i18n="refundCount">Refunds</span><strong id="refundCount">0</strong></article><article><span data-i18n="refundTotal">Total refunded</span><strong id="refundTotal">₸0</strong></article><article><span data-i18n="refundAverage">Average refund</span><strong id="refundAverage">₸0</strong></article></div><article class="panel"><div class="panel-head"><div><h2 data-i18n="refundHistory">Refund history</h2><p class="muted" data-i18n="refundHelp">Refunds created by your team or through the API.</p></div><button id="refreshRefunds" data-i18n="refresh">Refresh</button></div><form id="refundFilters" class="filter-bar recurring-filter"><label><span data-i18n="dateFrom">From</span><input id="refundDateFrom" type="date" /></label><label><span data-i18n="dateTo">To</span><input id="refundDateTo" type="date" /></label><label><span data-i18n="status">Status</span><select id="refundStatus"><option value="" data-i18n="allStatuses">All statuses</option><option value="pending">pending</option><option value="succeeded">succeeded</option><option value="failed">failed</option><option value="unknown">unknown</option></select></label><button class="primary" data-i18n="applyFilters">Apply</button></form><div class="table-wrap"><table><thead><tr><th data-i18n="created">Created</th><th data-i18n="order">Order</th><th data-i18n="customer">Customer</th><th data-i18n="amount">Amount</th><th data-i18n="status">Status</th><th data-i18n="reason">Reason</th></tr></thead><tbody id="refundsBody"></tbody></table></div></article></section>
+
+        <section id="printQrPage" class="page" hidden><div class="grid-two print-layout"><article class="panel"><h2 data-i18n="printQrTitle">Create a printable payment QR</h2><p class="muted" data-i18n="printQrHelp">The printed code stays usable. Each customer scan creates a fresh short-lived Kaspi QR.</p><form id="printQrForm" class="stack"><label><span data-i18n="amountKzt">Amount, KZT</span><input id="printQrAmount" type="number" min="1" step="0.01" required /></label><label><span data-i18n="description">Description</span><input id="printQrDescription" maxlength="100" /></label><label><span data-i18n="externalOrder">External order ID</span><input id="printQrOrder" maxlength="200" /></label><label class="confirm-row"><input id="printQrSingleUse" type="checkbox" /><span data-i18n="singleUseQr">Disable after the first successful payment</span></label><button class="primary" data-i18n="generateQr">Generate printable code</button></form></article><article id="printQrCard" class="panel qr-print-card"><div id="printQrEmpty" class="empty-state"><span>▣</span><p data-i18n="qrWillAppear">Your printable QR will appear here.</p></div><div id="printQrResult" hidden><div class="brand print-brand"><span>K</span> Kaspi Automation</div><img id="printQrImage" alt="Payment request QR code" /><h2 id="printQrPrice"></h2><p id="printQrCaption"></p><strong id="printQrShortCode"></strong><a id="printQrPublicLink" class="button-link" target="_blank" rel="noopener" data-i18n="openPaymentPage">Open payment page</a><button id="printQrButton" data-i18n="print">Print</button></div></article></div><article class="panel"><div class="panel-head"><h2 data-i18n="printableRequests">Printable payment requests</h2><button id="refreshPrintableQr" data-i18n="refresh">Refresh</button></div><div id="printableQrList"></div></article></section>
+
+        <section id="kaspiPage" class="page" hidden>
+          <article class="panel"><div class="panel-head"><div><h2 data-i18n="organizationSettings">Organization settings</h2><p class="muted" data-i18n="organizationSettingsHelp">Choose the dashboard name and whether requests use the safe test environment or real Kaspi.</p></div></div><form id="organizationForm" class="form-grid"><label><span data-i18n="businessName">Business name</span><input id="organizationName" maxlength="200" required /></label><label><span data-i18n="workMode">Work mode</span><select id="organizationMode"><option value="test" data-i18n="testMode">Test — no real Kaspi requests</option><option value="live" data-i18n="liveMode">Live — real customer requests</option></select></label><label class="confirm-row organization-consent"><input id="organizationConsent" type="checkbox" /><span data-i18n="mediaConsent">Allow this organization to be named in customer stories</span></label><button class="primary" data-i18n="saveSettings">Save settings</button></form><div id="organizationProviderInfo" class="info-box"></div></article>
+          <article id="kaspiConnectedPanel" class="panel"><div class="panel-head"><h2 data-i18n="connectionStatus">Connection status</h2><button id="disconnectKaspi" class="danger" hidden data-i18n="disconnect">Disconnect</button></div><div id="kaspiStatus"></div></article>
+          <div id="kaspiWizard" class="wizard"><div class="wizard-top"><button id="kaspiBack" class="link" hidden>← <span data-i18n="back">Back</span></button><div class="wizard-progress"><span id="kaspiProgressBar"></span></div><small id="kaspiStepLabel"></small></div>
+            <section id="kaspiIntro" class="wizard-step"><p class="eyebrow" data-i18n="guidedSetup">Guided setup</p><h2 data-i18n="connectCashier">Let’s connect your Kaspi cashier</h2><p class="wizard-lead" data-i18n="connectCashierText">This is needed to accept real payments. It takes 2–3 minutes.</p><div class="guide-links"><a href="/guides/kassir-ne-podklyuchaetsya" target="_blank">▤ <span data-i18n="guideNotConnect">Guide: Cashier won’t connect</span></a><a href="/guides/trebovaniya-k-nomeru-kassira" target="_blank">▤ <span data-i18n="guideNumber">Guide: Which number works for a cashier</span></a></div><details open><summary data-i18n="whatCashier">What is a cashier?</summary><p data-i18n="whatCashierText">A cashier is a separate phone number with the “Cashier” role in Kaspi Pay. Kaspi sends an SMS code to it so the service can be linked.</p></details><div class="info-box" data-i18n="readyNote">Prepare the cashier’s phone before starting. The complete authorization window lasts about ten minutes.</div><button class="primary wizard-main" id="kaspiStart" data-i18n="start">Start</button></section>
+            <section id="kaspiChecks" class="wizard-step" hidden><h2 data-i18n="checkThree">Before linking, check 3 things</h2><p class="wizard-lead" data-i18n="tickAll">Tick each one to unlock the next step.</p><div class="check-card"><b>1</b><div><h3 data-i18n="checkEmployeeTitle">The number is added to Employees</h3><p data-i18n="checkEmployeeText">Kaspi Pay → Settings → Employees → Add employee.</p><label class="confirm-row"><input type="checkbox" data-kaspi-check /><span data-i18n="checkEmployeeConfirm">I added this number as an employee in Kaspi Pay</span></label></div></div><div class="check-card"><b>2</b><div><h3 data-i18n="checkRoleTitle">The role is “Cashier” only</h3><p data-i18n="checkRoleText">Not Director, Accountant, Manager, or another role.</p><label class="confirm-row"><input type="checkbox" data-kaspi-check /><span data-i18n="checkRoleConfirm">The cashier has only the “Cashier” role</span></label></div></div><div class="check-card"><b>3</b><div><h3 data-i18n="checkLoginTitle">Don’t sign in under this number afterward</h3><p data-i18n="checkLoginText">Signing in to Kaspi Pay with the cashier number can displace this connection.</p><label class="confirm-row"><input type="checkbox" data-kaspi-check /><span data-i18n="checkLoginConfirm">I will not sign in using the cashier’s number</span></label></div></div><p id="kaspiCheckCount" class="check-count"></p><button class="primary wizard-main" id="kaspiChecksNext" disabled data-i18n="next">Next</button></section>
+            <section id="kaspiPhoneStep" class="wizard-step" hidden><h2 data-i18n="enterCashier">Enter the cashier’s number</h2><p class="wizard-lead" data-i18n="smsToNumber">Kaspi will send an SMS code to this number.</p><div class="wizard-card"><label><span data-i18n="cashierPhone">Cashier’s phone</span><small data-i18n="cashierPhoneHelp">Use the number from Kaspi Pay → Employees.</small><input id="kaspiPhone" inputmode="tel" placeholder="+7 700 123 45 67" required /></label></div><div id="kaspiRoleCard" class="wizard-card"><h3 data-i18n="roleQuestion">What role does this number have in Kaspi Pay?</h3><p data-i18n="roleHelp">Select the same role configured in Kaspi Pay.</p><div class="role-options"><label><input type="radio" name="kaspiRole" value="director" /><span data-i18n="director">Director</span></label><label><input type="radio" name="kaspiRole" value="accountant" /><span data-i18n="accountant">Accountant</span></label><label><input type="radio" name="kaspiRole" value="cashier" /><span data-i18n="cashier">Cashier</span></label><label><input type="radio" name="kaspiRole" value="manager" /><span data-i18n="shopManager">Shop Manager</span></label></div></div><div id="kaspiRoleError" class="warning-box" hidden><strong data-i18n="numberWontWork">This number won’t work</strong><p data-i18n="cashierOnly">In Kaspi Pay it must have only the “Cashier” role.</p><a href="/guides/trebovaniya-k-nomeru-kassira" target="_blank" data-i18n="showHow">Show how to change it →</a></div><button class="primary wizard-main" id="kaspiPhoneNext" disabled data-i18n="continue">Continue</button></section>
+            <section id="kaspiWarningStep" class="wizard-step" hidden><h2 data-i18n="importantBeforeSms">Important before the SMS</h2><div class="warning-box large"><strong data-i18n="doNotSignIn">Don’t sign in to Kaspi Pay under this number</strong><p data-i18n="doNotSignInText">After connecting, signing in with this cashier number will end the automation session and payments will stop.</p></div><label class="confirm-row success"><input id="kaspiFinalConfirm" type="checkbox" /><span data-i18n="finalConfirm">I understand and won’t sign in under the cashier’s number</span></label><button class="primary wizard-main" id="kaspiSendSms" disabled data-i18n="sendSms">Send the SMS</button></section>
+            <section id="kaspiOtpStep" class="wizard-step" hidden><h2 data-i18n="enterSms">Enter the SMS code</h2><p class="wizard-lead" data-i18n="codeExpires">The code expires quickly. Enter it as soon as it arrives.</p><form id="kaspiOtpForm" class="wizard-card stack"><label><span data-i18n="smsCode">SMS code</span><input id="kaspiOtp" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" pattern="[0-9]{4,8}" required /></label><button class="primary" data-i18n="verifyConnect">Verify and connect</button></form></section>
+          </div>
+        </section>
+
+        <section id="developersPage" class="page" hidden>
+          <article class="panel integration-intro">
+            <div><p class="eyebrow">API</p><h2 data-i18n="developerAccess">API keys and payment notifications</h2><p class="muted" data-i18n="developerAccessHelp">Create the program key and its webhook together in one guided setup.</p></div>
+            <div class="row-actions"><a class="button-link" href="/api-docs" data-i18n="viewDocs">View docs</a><button id="openIntegrationWizard" class="primary" data-i18n="createIntegration">Create API key</button></div>
+          </article>
+          <article class="panel"><h2 data-i18n="apiIntegrations">API integrations</h2><p class="muted" data-i18n="apiIntegrationsHelp">Each program has one API key and, optionally, its own payment notification address.</p><div id="newWebhookSecret" class="secret" hidden></div><div id="apiKeysList" class="integration-cards"></div><details id="unlinkedWebhooks" hidden><summary data-i18n="legacyWebhooks">Older standalone webhooks</summary><div id="webhooksList"></div></details></article>
+          <article class="panel"><div class="panel-head"><div><h2 data-i18n="recentDeliveries">Recent deliveries</h2><p class="muted" data-i18n="deliveryLogHelp">Inspect notifications, response codes, and retry failed deliveries.</p></div></div><form id="deliveryFilters" class="filter-bar delivery-filter"><label><span data-i18n="dateFrom">From</span><input id="deliveryDateFrom" type="date" /></label><label><span data-i18n="dateTo">To</span><input id="deliveryDateTo" type="date" /></label><label><span data-i18n="apiKeySingular">API key</span><select id="deliveryKey"><option value="" data-i18n="allApiKeys">All API keys</option></select></label><label><span data-i18n="status">Status</span><select id="deliveryStatus"><option value="" data-i18n="allStatuses">All statuses</option><option value="pending">pending</option><option value="delivering">delivering</option><option value="succeeded">succeeded</option><option value="failed">failed</option><option value="dead">dead</option></select></label><button class="primary" data-i18n="applyFilters">Apply</button></form><div id="deliveriesList"></div></article>
+        </section>
+
+        <section id="teamPage" class="page" hidden>
+          <article id="staffPanel" class="panel"><div class="grid-two no-margin"><div><h2 data-i18n="members">Members</h2><div id="teamList"></div></div><div><h2 data-i18n="inviteTeammate">Invite a teammate</h2><form id="inviteForm" class="stack"><input id="inviteEmail" type="email" placeholder="teammate@example.com" required /><select id="inviteRole"><option>viewer</option><option>operator</option><option>developer</option><option>admin</option></select><button class="primary" data-i18n="createInvitation">Create invitation</button></form><div id="inviteToken" class="secret" hidden></div></div></div></article>
+          <div id="accessPanel">
+            <div class="grid-two no-margin access-grid"><article class="panel"><h2 data-i18n="accountSecurity">Account security</h2><div id="emailVerificationStatus"></div><button id="sendVerification" hidden data-i18n="sendVerification">Send verification email</button><div id="verificationLink" class="secret" hidden></div><div id="mfaStatus"></div><button id="setupMfa" class="primary" data-i18n="setupAuthenticator">Set up authenticator</button><div id="mfaSetup" hidden><p class="muted" data-i18n="scanQr">Scan this QR code with an authenticator app, then enter its six-digit code.</p><img id="mfaQr" width="240" height="240" alt="Authenticator enrollment QR code" /><div id="mfaSecret" class="secret"></div><form id="mfaEnableForm" class="inline-form"><input id="mfaEnableCode" inputmode="numeric" pattern="[0-9]{6}" required /><button class="primary" data-i18n="enable">Enable</button></form></div><button id="disableMfa" class="danger" hidden data-i18n="disableAuthenticator">Disable authenticator</button></article>
+              <article class="panel"><h2 data-i18n="acceptAccess">Enter an access code</h2><p class="muted" data-i18n="acceptAccessHelp">Use a code from another business to add it to your workspace switcher.</p><form id="acceptAccessForm" class="stack"><input id="acceptAccessCode" maxlength="30" placeholder="KPA-XXXX-XXXX-XXXX" required /><button class="primary" data-i18n="connectBusiness">Connect business</button></form></article></div>
+            <article class="panel"><div class="panel-head"><div><h2 data-i18n="externalAccess">Third-party access</h2><p class="muted" data-i18n="externalAccessHelp">Issue a short-lived, one-use code without sharing your password or API key.</p></div></div><form id="accessGrantForm" class="access-grant-form"><label><span data-i18n="accessLabel">Who or what</span><input id="accessGrantLabel" maxlength="120" placeholder="Accounting partner" required /></label><label><span data-i18n="emailOptional">Email (optional)</span><input id="accessGrantEmail" type="email" /></label><label><span data-i18n="role">Role</span><select id="accessGrantRole"><option value="viewer">viewer</option><option value="operator">operator</option><option value="developer">developer</option></select></label><label><span data-i18n="expiresIn">Expires in</span><select id="accessGrantExpiry"><option value="1">1 day</option><option value="7" selected>7 days</option><option value="30">30 days</option></select></label><button class="primary" data-i18n="createAccessCode">Create access code</button></form><div id="newAccessCode" class="secret" hidden></div><div id="accessGrantsList"></div></article>
+          </div>
+        </section>
+
+        <section id="planPage" class="page" hidden>
+          <article class="panel plan-current"><div><p class="eyebrow" data-i18n="currentPlan">Current plan</p><h2 id="currentPlanName">—</h2><p id="currentPlanDescription" class="muted"></p></div><div class="plan-price"><strong id="currentPlanPrice">—</strong><span data-i18n="perMonth">per month</span></div></article>
+          <div class="metrics plan-usage"><article><span data-i18n="monthlyPayments">Payments this month</span><strong id="usagePayments">0</strong></article><article><span data-i18n="teamMembers">Team members</span><strong id="usageTeam">0</strong></article><article><span data-i18n="activeApiKeys">Active API keys</span><strong id="usageApiKeys">0</strong></article></div>
+          <article class="panel"><div class="panel-head"><div><h2 data-i18n="availablePlans">Available plans</h2><p class="muted" data-i18n="planChangeHelp">Send a plan request; no charge is made until it is confirmed.</p></div></div><div id="planOptions" class="plan-options"></div></article>
+          <div class="grid-two"><article class="panel"><h2 data-i18n="planRequests">Plan requests</h2><div id="planRequests"></div></article><article class="panel"><h2 data-i18n="billingHistory">Payment history</h2><div id="billingHistory"></div></article></div>
+        </section>
+        <section id="partnersPage" class="page" hidden>
+          <article class="panel partner-hero"><div><p class="eyebrow" data-i18n="partnerProgram">Partner program</p><h2 data-i18n="partnersTitle">Build for multiple businesses</h2><p data-i18n="partnersText">Invite merchants with your link and track registrations and rewards here.</p></div><a class="button-link" href="/api-docs" data-i18n="readIntegrationDocs">Read integration docs</a></article>
+          <div class="metrics partner-metrics"><article><span data-i18n="registrations">Registrations</span><strong id="partnerRegistrations">0</strong></article><article><span data-i18n="qualifiedReferrals">Qualified</span><strong id="partnerQualified">0</strong></article><article><span data-i18n="rewards">Rewards</span><strong id="partnerRewards">₸0</strong></article></div>
+          <article class="panel"><h2 data-i18n="yourReferralLink">Your referral link</h2><p class="muted" data-i18n="referralHelp">A business created through this link is attributed to your organization.</p><div class="copy-field"><code id="partnerReferralUrl"></code><button id="copyPartnerLink" data-i18n="copy">Copy</button></div></article>
+          <article class="panel"><h2 data-i18n="referredBusinesses">Referred businesses</h2><div id="partnerReferrals"></div></article>
+        </section>
+        <section id="guidesPage" class="page" hidden><div class="guide-grid"><a class="guide-card" href="/guides/trebovaniya-k-nomeru-kassira"><span>01</span><div><h2 data-i18n="guideNumberTitle">Which number works for a Kaspi cashier?</h2><p data-i18n="guideNumberDesc">Three requirements and the most common role mistake.</p></div></a><a class="guide-card" href="/guides/kassir-ne-podklyuchaetsya"><span>02</span><div><h2 data-i18n="guideTroubleTitle">Kaspi cashier won’t connect</h2><p data-i18n="guideTroubleDesc">Diagnose missing SMS, role conflicts, and displaced sessions.</p></div></a><a class="guide-card" href="/api-docs"><span>03</span><div><h2 data-i18n="guideApiTitle">Create your first API payment</h2><p data-i18n="guideApiDesc">Authentication, idempotency, webhooks, and a working request.</p></div></a></div></section>
+
+        <section id="auditPage" class="page" hidden><article class="panel"><div class="panel-head"><h2 data-i18n="recentActivity">Recent security and business activity</h2><button id="refreshAudit" data-i18n="refresh">Refresh</button></div><div class="table-wrap"><table><thead><tr><th data-i18n="time">Time</th><th data-i18n="actor">Actor</th><th data-i18n="action">Action</th><th data-i18n="resource">Resource</th><th data-i18n="request">Request</th></tr></thead><tbody id="auditBody"></tbody></table></div></article></section>
+      </main>
+      <div class="language-menu app-language-menu" data-language-menu hidden><button data-language="ru">🇷🇺 <span>Русский</span></button><button data-language="kk">🇰🇿 <span>Қазақша</span></button><button data-language="en">🇬🇧 <span>English</span></button></div>
+    </div>
+    <div id="integrationWizardBackdrop" class="modal-backdrop" hidden>
+      <div class="integration-modal" role="dialog" aria-modal="true" aria-labelledby="integrationWizardTitle">
+        <button class="modal-close" type="button" data-close-integration aria-label="Close">×</button>
+        <div class="integration-stepper" aria-label="Integration setup progress">
+          <div data-integration-marker="1"><b>1</b><span data-i18n="keyNameStep">Name</span></div>
+          <div data-integration-marker="2"><b>2</b><span data-i18n="notificationsStep">Notifications</span></div>
+          <div data-integration-marker="3"><b>3</b><span data-i18n="protectionStep">Protection</span></div>
+          <div data-integration-marker="4"><b>4</b><span data-i18n="doneStep">Done</span></div>
+        </div>
+
+        <section class="integration-wizard-step" data-integration-step="1">
+          <h2 id="integrationWizardTitle"><span data-i18n="stepOneTitle">Step 1. Name the key</span></h2>
+          <p class="wizard-lead" data-i18n="stepOneText">An API key is the password our system uses to recognize your program. Give it a clear name so you can find it later.</p>
+          <form id="integrationNameForm" class="stack">
+            <label><span><em>*</em> <span data-i18n="keyName">Name</span></span><input id="integrationKeyName" maxlength="100" placeholder="My website" required /><small data-i18n="keyNameExample">For example: My website, Telegram bot, Store software</small></label>
+            <details class="advanced-settings"><summary data-i18n="advancedSettings">Advanced settings</summary><div class="form-grid"><label><span data-i18n="environment">Environment</span><select id="integrationEnvironment"><option value="live">Live</option><option value="test">Test</option></select></label><fieldset><legend data-i18n="permissions">Permissions</legend><label><input id="scopeRead" type="checkbox" checked /> payments:read</label><label><input id="scopeWrite" type="checkbox" checked /> payments:write</label></fieldset></div></details>
+            <div class="modal-actions"><button type="button" data-close-integration data-i18n="cancel">Cancel</button><button class="primary" type="submit" data-i18n="next">Next</button></div>
+          </form>
+        </section>
+
+        <section class="integration-wizard-step" data-integration-step="2" hidden>
+          <h2 data-i18n="stepTwoTitle">Step 2. Where to report payments</h2>
+          <p class="wizard-lead" data-i18n="stepTwoText">When a customer pays, the system sends the result to your website or program at its webhook address.</p>
+          <div class="wizard-callout blue"><b>i</b><div><strong data-i18n="webhookExplainer">This is the webhook</strong><p data-i18n="webhookExplainerText">Your developer may call it a webhook URL or endpoint. It is the address for payment notifications.</p></div></div>
+          <div class="developer-helper"><strong data-i18n="dontKnowAddress">Don’t know the address?</strong><p data-i18n="copyPromptHelp">Copy this request and send it to your AI assistant or developer.</p><pre id="webhookHelperPrompt"></pre><button id="copyWebhookPrompt" type="button">▣ <span data-i18n="copyForDeveloper">Copy for AI or developer</span></button></div>
+          <form id="integrationWebhookForm" class="stack"><label><span data-i18n="notificationAddress">Notification address</span><input id="integrationWebhookUrl" type="url" maxlength="2000" placeholder="https://your-website.com/kaspi/webhook" /><small data-i18n="notificationAddressHelp">The address should normally start with https:// and accept POST requests.</small></label><div class="modal-actions split"><button id="skipWebhook" class="link" type="button" data-i18n="skipWebhook">Skip — I’ll set it up later</button><span><button id="backToIntegrationName" type="button" data-i18n="back">Back</button><button class="primary" type="submit" data-i18n="next">Next</button></span></div></form>
+        </section>
+
+        <section class="integration-wizard-step" data-integration-step="3" hidden>
+          <h2 data-i18n="stepThreeTitle">Step 3. Protect notifications</h2>
+          <p class="wizard-lead" data-i18n="stepThreeText">Every webhook receives a separate signing secret so your program can verify that a notification really came from this service.</p>
+          <div id="integrationProtectionReady" class="wizard-callout blue"><b>✓</b><div><strong data-i18n="protectionReady">Webhook protection is ready</strong><p id="integrationProtectionSummary"></p></div></div>
+          <div id="integrationProtectionSkipped" class="wizard-callout amber" hidden><b>!</b><div><strong data-i18n="noWebhookAddress">No notification address specified</strong><p data-i18n="noWebhookAddressText">The API key will be created without a webhook. You can add an address and secret later.</p></div></div>
+          <p id="integrationCreateError" class="error" role="alert" hidden></p>
+          <div class="modal-actions"><button id="backToIntegrationWebhook" type="button" data-i18n="back">Back</button><button id="createIntegration" class="primary" type="button" data-i18n="createKey">Create key</button></div>
+        </section>
+
+        <section class="integration-wizard-step" data-integration-step="4" hidden>
+          <div class="success-mark">✓</div><h2 data-i18n="integrationCreated">Your integration is ready</h2><p class="wizard-lead" data-i18n="saveSecretsNow">Copy these values now. For security, the complete secrets will not be shown again.</p>
+          <div class="created-secret"><span data-i18n="apiKeySingular">API key</span><code id="createdApiKey"></code><button type="button" data-copy-secret="createdApiKey" data-i18n="copy">Copy</button></div>
+          <div id="createdWebhookSecretRow" class="created-secret"><span data-i18n="webhookSecret">Webhook signing secret</span><code id="createdWebhookSecret"></code><button type="button" data-copy-secret="createdWebhookSecret" data-i18n="copy">Copy</button></div>
+          <div class="modal-actions"><button id="finishIntegration" class="primary" type="button" data-i18n="done">Done</button></div>
+        </section>
+      </div>
+    </div>
+    <div id="paymentDetailBackdrop" class="modal-backdrop" hidden>
+      <div class="integration-modal detail-modal" role="dialog" aria-modal="true" aria-labelledby="paymentDetailTitle">
+        <button id="closePaymentDetail" class="modal-close" type="button" aria-label="Close">×</button>
+        <p class="eyebrow" data-i18n="invoiceDetails">Invoice details</p><h2 id="paymentDetailTitle"></h2>
+        <div id="paymentDetailContent" class="detail-grid"></div>
+        <form id="paymentNoteForm" class="stack"><label><span data-i18n="internalNote">Private note</span><textarea id="paymentDetailNote" maxlength="255"></textarea><small data-i18n="internalNoteHelp">Only your team sees this note. It is never sent to Kaspi.</small></label><button class="primary" data-i18n="saveNote">Save note</button></form>
+        <div id="paymentDetailActions" class="row-actions detail-actions"></div>
+      </div>
+    </div>
+    <div id="toast" class="toast" hidden></div>
+    <script src="/dashboard.js" type="module"></script>
+  </body>
+</html>

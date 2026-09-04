@@ -1,0 +1,8 @@
+CREATE ROLE kaspi_app
+  LOGIN
+  PASSWORD 'kaspi-app-local-only'
+  NOSUPERUSER
+  NOCREATEDB
+  NOCREATEROLE
+  NOINHERIT;
+

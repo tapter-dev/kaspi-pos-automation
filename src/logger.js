@@ -1,14 +1,15 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { redactForLog } from './redact.js';
+import { DATA_DIR } from './config.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const LOGS_DIR = path.join(__dirname, '..', 'logs');
+const LOGS_DIR = path.join(DATA_DIR, 'logs');
 
 // Ensure logs directory exists
 if (!fs.existsSync(LOGS_DIR)) {
-  fs.mkdirSync(LOGS_DIR, { recursive: true });
+  fs.mkdirSync(LOGS_DIR, { recursive: true, mode: 0o700 });
 }
+fs.chmodSync(LOGS_DIR, 0o700);
 
 const getLogFile = () => {
   const now = new Date();
@@ -24,13 +25,15 @@ const writeLine = (level, tag, message, extra) => {
   const ts = formatTimestamp();
   let line = `[${ts}] [${level}] [${tag}] ${message}`;
   if (extra !== undefined) {
-    line += typeof extra === 'string' ? ` ${extra}` : ` ${JSON.stringify(extra)}`;
+    line += typeof extra === 'string' ? ` ${extra}` : ` ${JSON.stringify(redactForLog(extra))}`;
   }
   line += '\n';
 
   // Write to file
   try {
-    fs.appendFileSync(getLogFile(), line);
+    const logFile = getLogFile();
+    if (fs.existsSync(logFile)) fs.chmodSync(logFile, 0o600);
+    fs.appendFileSync(logFile, line, { encoding: 'utf8', mode: 0o600 });
   } catch (err) {
     console.error('Failed to write log:', err.message);
   }

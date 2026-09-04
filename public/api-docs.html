@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kaspi Automation API</title>
+    <link rel="stylesheet" href="/dashboard.css" />
+  </head>
+  <body>
+    <main class="content docs">
+      <header><div><p class="eyebrow">Developer reference</p><h1>Kaspi Automation API v1</h1></div><a href="/openapi.yaml">OpenAPI 3.1 YAML</a></header>
+      <article class="panel">
+        <h2>Authentication</h2>
+        <p>Create an API key in the customer dashboard and send <code>Authorization: Bearer kpa_live_…</code>. Keys are tenant-bound and support <code>payments:read</code> and <code>payments:write</code> scopes.</p>
+      </article>
+      <article class="panel">
+        <h2>Create a QR payment</h2>
+        <pre><code>curl -X POST https://your-host/api/v1/payments \
+  -H 'Authorization: Bearer kpa_live_…' \
+  -H 'Idempotency-Key: order-1001-attempt-1' \
+  -H 'Content-Type: application/json' \
+  -d '{"method":"qr","amount":1250,"externalOrderId":"ORDER-1001"}'</code></pre>
+      </article>
+      <article class="panel">
+        <h2>Webhook verification</h2>
+        <p>Compute hex HMAC-SHA256 over <code>X-Webhook-Timestamp + "." + rawRequestBody</code> using the endpoint signing secret. Reject stale timestamps and compare signatures in constant time. Return any 2xx response to acknowledge delivery.</p>
+      </article>
+      <article class="panel">
+        <h2>Endpoints</h2>
+        <div class="table-wrap"><table><thead><tr><th>Method</th><th>Path</th><th>Scope</th></tr></thead><tbody>
+          <tr><td>GET</td><td><code>/api/v1/account</code></td><td>authenticated</td></tr>
+          <tr><td>POST</td><td><code>/api/v1/payments</code></td><td>payments:write</td></tr>
+          <tr><td>GET</td><td><code>/api/v1/payments</code></td><td>payments:read</td></tr>
+          <tr><td>GET</td><td><code>/api/v1/payments/{id}</code></td><td>payments:read</td></tr>
+          <tr><td>POST</td><td><code>/api/v1/payments/{id}/cancel</code></td><td>payments:write</td></tr>
+          <tr><td>POST</td><td><code>/api/v1/payments/{id}/refunds</code></td><td>payments:write</td></tr>
+        </tbody></table></div>
+      </article>
+    </main>
+  </body>
+</html>

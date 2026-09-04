@@ -17,4 +17,5 @@ webhooks.json
 tracked-payments.json
 webhook-retries.json
 logs/
+data/
 last-session.json

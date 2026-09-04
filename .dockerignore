@@ -1,0 +1,15 @@
+.git
+.github
+.context
+node_modules
+npm-debug.log
+.env*
+*.json.bak
+keypair.json
+device.json
+ecdh-keypair.json
+tracked-payments.json
+webhook-retries.json
+logs
+test
+docs

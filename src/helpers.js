@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import fetch from 'node-fetch';
 import { DEVICE, APP, UA_NATIVE } from './config.js';
 import { computeTokenSnMac, computeXSign } from './crypto.js';
+import { redactForLog } from './redact.js';
 
 // ─── Utilities ───
 
@@ -48,10 +49,10 @@ export const extractUserToken = (resp) => {
 export const loggedFetch = async (url, options = {}) => {
   const method = (options.method || 'GET').toUpperCase();
   console.log(`\n>>> ${method} ${url}`);
-  if (options.headers) console.log('>>> Headers:', JSON.stringify(options.headers, null, 2));
+  if (options.headers) console.log('>>> Headers:', JSON.stringify(redactForLog(options.headers), null, 2));
   if (options.body) {
     try {
-      console.log('>>> Body:', JSON.parse(options.body));
+      console.log('>>> Body:', redactForLog(JSON.parse(options.body)));
     } catch {
       console.log('>>> Body:', options.body);
     }
@@ -70,7 +71,10 @@ export const loggedFetch = async (url, options = {}) => {
     }
   }
   console.log(`<<< ${resp.status} ${resp.statusText}`);
-  console.log('<<< Response:', typeof body === 'object' ? JSON.stringify(body, null, 2) : body);
+  console.log(
+    '<<< Response:',
+    typeof body === 'object' ? JSON.stringify(redactForLog(body), null, 2) : body,
+  );
   return resp;
 };
 

@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: kaspi_automation
+          POSTGRES_USER: kaspi_admin
+          POSTGRES_PASSWORD: kaspi-admin-ci
+        ports: ['55432:5432']
+        options: >-
+          --health-cmd "pg_isready -U kaspi_admin -d kaspi_automation"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      TOKEN_SECRET_KEY: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      API_KEY_PEPPER: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      DASHBOARD_SESSION_SECRET: cccccccccccccccccccccccccccccccc
+      DATABASE_MIGRATION_URL: postgres://kaspi_admin:kaspi-admin-ci@localhost:55432/kaspi_automation
+      DATABASE_URL: postgres://kaspi_app:kaspi-app-ci@localhost:55432/kaspi_automation
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Create restricted database role
+        env:
+          PGPASSWORD: kaspi-admin-ci
+        run: |
+          psql -h localhost -p 55432 -U kaspi_admin -d kaspi_automation \
+            -c "CREATE ROLE kaspi_app LOGIN PASSWORD 'kaspi-app-ci' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT"
+      - run: npm run db:migrate
+      - run: npm run lint
+      - run: npm test
+      - run: npm audit --audit-level=high
+      - name: Container build
+        run: docker build -t kaspi-automation:${{ github.sha }} .

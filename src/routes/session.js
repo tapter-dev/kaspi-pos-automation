@@ -1,21 +1,15 @@
 import { Router } from 'express';
 import { KASPI_QRPAY_URL } from '../config.js';
 import { loggedFetch, signedQrPayHeaders } from '../helpers.js';
+import { extractKaspiSession } from '../middleware/kaspiSession.js';
 import { decryptSecret } from '../crypto.js';
 
 const router = Router();
 
-// Extract session from request headers
-const extractSession = (req) => ({
-  tokenSN: req.headers['x-token-sn'] || null,
-  profileId: req.headers['x-profile-id'] || null,
-  vtokenSecret: req.headers['x-vtoken-secret'] || null,
-});
-
 // ─── Check session validity ───
 
 router.get('/check', async (req, res) => {
-  const session = extractSession(req);
+  const session = extractKaspiSession(req);
 
   // 1. Check required headers
   if (!session.tokenSN) return res.status(401).json({ active: false, error: 'Missing X-Token-SN header.' });

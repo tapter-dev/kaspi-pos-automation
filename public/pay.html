@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kaspi payment</title>
+    <link rel="stylesheet" href="/pay.css" />
+  </head>
+  <body>
+    <header><div class="brand"><span>K</span> Kaspi Automation</div><select id="language" aria-label="Language"><option value="ru">🇷🇺 Русский</option><option value="kk">🇰🇿 Қазақша</option><option value="en">🇬🇧 English</option></select></header>
+    <main>
+      <section id="loading" class="card"><div class="spinner"></div><p>Loading…</p></section>
+      <section id="request" class="card" hidden>
+        <p id="merchant" class="eyebrow"></p><h1 id="description"></h1><div id="amount" class="amount"></div>
+        <p id="explanation" class="muted"></p><button id="startPayment" class="primary"></button>
+        <small id="shortCode"></small>
+      </section>
+      <section id="payment" class="card" hidden>
+        <p id="paymentMerchant" class="eyebrow"></p><h1 id="paymentTitle"></h1><img id="paymentQr" alt="Kaspi payment QR" />
+        <div id="paymentAmount" class="amount small"></div><p id="countdown" class="muted"></p>
+        <a id="openKaspi" class="primary button-link" target="_blank" rel="noopener"></a><button id="refreshQr"></button>
+      </section>
+      <section id="error" class="card" hidden><div class="error-mark">!</div><h1 id="errorTitle"></h1><p id="errorMessage" class="muted"></p><button id="tryAgain"></button></section>
+    </main>
+    <script src="/pay.js" type="module"></script>
+  </body>
+</html>

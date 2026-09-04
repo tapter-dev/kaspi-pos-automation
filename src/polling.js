@@ -1,16 +1,14 @@
-import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
-import { fileURLToPath } from 'url';
-import { KASPI_QRPAY_URL } from './config.js';
+import { DATA_DIR, KASPI_QRPAY_URL } from './config.js';
 import { signedQrPayHeaders } from './helpers.js';
 import { decryptSecret } from './crypto.js';
 import { getWebhooksByEvent } from './webhookStore.js';
 import { logger } from './logger.js';
+import { createWebhookSignature, isRetryableWebhookStatus, isSuccessfulWebhookStatus } from './webhookDelivery.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TRACKED_FILE = path.join(__dirname, '..', 'tracked-payments.json');
+const TRACKED_FILE = path.join(DATA_DIR, 'tracked-payments.json');
 
 // ─── Tracked payments ───
 
@@ -45,7 +43,7 @@ const loadTracked = () => {
 
 // ─── Pending retries (persisted) ───
 
-const RETRY_FILE = path.join(__dirname, '..', 'webhook-retries.json');
+const RETRY_FILE = path.join(DATA_DIR, 'webhook-retries.json');
 let pendingRetries = [];
 
 const saveRetries = () => {
@@ -178,12 +176,25 @@ const fetchWithTimeout = async (url, options, timeoutMs = 10000) => {
 
 const sendWebhook = async (hook, payload, attempt = 1) => {
   const body = JSON.stringify(payload);
-  const signature =
-    'sha256=' +
-    crypto
-      .createHmac('sha256', hook.secret || '')
-      .update(body)
-      .digest('hex');
+  const signature = createWebhookSignature(body, hook.secret);
+
+  const clearPendingRetry = () => {
+    pendingRetries = pendingRetries.filter(
+      (r) =>
+        !(r.hook.url === hook.url && r.payload.paymentId === payload.paymentId && r.payload.event === payload.event),
+    );
+  };
+
+  const queueRetry = () => {
+    clearPendingRetry();
+    pendingRetries.push({
+      hook,
+      payload,
+      attempt: attempt + 1,
+      executeAfter: Date.now() + (attempt === 1 ? 5000 : 30000),
+    });
+    saveRetries();
+  };
 
   try {
     const resp = await fetchWithTimeout(hook.url, {
@@ -194,31 +205,33 @@ const sendWebhook = async (hook, payload, attempt = 1) => {
       },
       body,
     });
+
+    if (!isSuccessfulWebhookStatus(resp.status)) {
+      const retryable = isRetryableWebhookStatus(resp.status);
+      logger.warn('WEBHOOK', `→ ${hook.url} | attempt ${attempt} returned ${resp.status} ${resp.statusText}`);
+      if (retryable && attempt < 3) {
+        queueRetry();
+      } else {
+        clearPendingRetry();
+        saveRetries();
+        logger.error(
+          'WEBHOOK',
+          `→ ${hook.url} | ${retryable ? 'exhausted retries' : 'permanent delivery failure'} (${resp.status})`,
+        );
+      }
+      return;
+    }
+
     logger.info('WEBHOOK', `→ ${hook.url} | ${resp.status} ${resp.statusText}`);
-    // Remove from pending retries on success
-    pendingRetries = pendingRetries.filter(
-      (r) =>
-        !(r.hook.url === hook.url && r.payload.paymentId === payload.paymentId && r.payload.event === payload.event),
-    );
+    clearPendingRetry();
     saveRetries();
   } catch (err) {
     logger.error('WEBHOOK', `→ ${hook.url} | attempt ${attempt} FAILED: ${err.message}`);
     if (attempt < 3) {
-      // Save retry to disk so it survives restarts
-      pendingRetries.push({
-        hook,
-        payload,
-        attempt: attempt + 1,
-        executeAfter: Date.now() + (attempt === 1 ? 5000 : 30000),
-      });
-      saveRetries();
+      queueRetry();
     } else {
-      logger.error('WEBHOOK', `→ ${hook.url} | FAILED after 3 retries`);
-      // Remove from pending retries
-      pendingRetries = pendingRetries.filter(
-        (r) =>
-          !(r.hook.url === hook.url && r.payload.paymentId === payload.paymentId && r.payload.event === payload.event),
-      );
+      logger.error('WEBHOOK', `→ ${hook.url} | FAILED after 3 attempts`);
+      clearPendingRetry();
       saveRetries();
     }
   }
