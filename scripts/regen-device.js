@@ -15,7 +15,7 @@ if (fs.existsSync(FILE)) {
 const device = {
   deviceId: crypto.randomUUID().toUpperCase(),
   installId: crypto.randomUUID().toUpperCase(),
-  pinHash: crypto.createHash('md5').update(crypto.randomBytes(16)).digest('hex'),
+  pinHash: crypto.createHash('sha256').update(crypto.randomBytes(16)).digest('hex'),
 };
 fs.writeFileSync(FILE, JSON.stringify(device, null, 2));
 console.log('Generated new device identity → device.json');
