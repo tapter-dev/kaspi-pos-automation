@@ -111,7 +111,7 @@ curl -X POST http://localhost:3000/api/auth/init
 
 | Өріс | Түрі | Міндетті | Сипаттама |
 |---|---|---|---|
-| `phoneNumber` | `string` | ✅ | Телефон нөмірі (формат: `7XXXXXXXXXX`) |
+| `phoneNumber` | `string` | ✅ | Кассирдің телефон нөмірі: ел кодынсыз 10 цифр, мысалы `7001234567` |
 | `processId` | `string` | ✅ | `/api/auth/init` процесінің ID-сі |
 
 **Сұраныс мысалы:**
@@ -119,8 +119,10 @@ curl -X POST http://localhost:3000/api/auth/init
 ```bash
 curl -X POST http://localhost:3000/api/auth/send-phone \
   -H "Content-Type: application/json" \
-  -d '{"phoneNumber": "77001234567", "processId": "abc123-..."}'
+  -d '{"phoneNumber": "7001234567", "processId": "abc123-..."}'
 ```
+
+> ⚠️ **Маңызды:** Нөмір ел кодынсыз көрсетіледі. Ел коды бар нөмір (`+7` немесе `8`) автоматты түрде 10 таңбалы түрге келтіріледі.
 
 **Сәтті жауап:**
 
@@ -168,7 +170,7 @@ curl -X POST http://localhost:3000/api/auth/verify-otp \
   "profileId": 12345,
   "organizationId": 67890,
   "orgName": "ЖК Иванов",
-  "phone": "77001234567",
+  "phone": "7001234567",
   "organizations": [ ... ]
 }
 ```
@@ -535,7 +537,7 @@ curl "http://localhost:3000/api/session/check" \
 
 | HTTP-код | Сипаттама |
 |---|---|
-| `400` | Міндетті параметрлер жоқ |
+| `400` | Міндетті параметрлер жоқ немесе параметр форматы қате |
 | `401` | Сессия тақырыптары жоқ немесе жарамсыз |
 | `500` | Сервердің ішкі қатесі немесе Kaspi API қатесі |
 

@@ -7,6 +7,14 @@ import { computeTokenSnMac, computeXSign } from './crypto.js';
 
 export const generateUUID = () => crypto.randomUUID().toUpperCase();
 
+// Kaspi expects a KZ mobile number as 10 digits WITHOUT the country code (7001234567). With the leading
+// country code (77001234567 / +77001234567 / 87001234567) Kaspi replies that the number does not belong
+// to the operator. Strip formatting and a leading 7/8 from 11-digit input; anything else is returned as digits.
+export const normalizePhone = (input) => {
+  const digits = String(input ?? '').replace(/\D/g, '');
+  return digits.length === 11 && /^[78]/.test(digits) ? digits.slice(1) : digits;
+};
+
 export const nowISO = () => {
   const d = new Date();
   const off = -d.getTimezoneOffset();

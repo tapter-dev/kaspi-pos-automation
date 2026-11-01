@@ -83,8 +83,8 @@ export const KASPI_QRPAY_URL = 'https://qrpay.kaspi.kz';
 // чтобы войти") for EVERY cashier. Fix: set APP_VERSION/APP_BUILD to the current Kaspi Pay iOS release (App Store
 // version + its iOS build number) and restart. Kaspi moved to date-based versions after 4.116 (26.0907, 26.0914, …).
 export const APP = {
-  version: process.env.APP_VERSION || '26.0921',
-  build: process.env.APP_BUILD || '1115',
+  version: process.env.APP_VERSION || '26.1029',
+  build: process.env.APP_BUILD || '1128',
   platform: process.env.APP_PLATFORM || 'iOS',
   platformVer: process.env.APP_PLATFORM_VER || '18.4',
   locale: process.env.APP_LOCALE || 'ru-RU',

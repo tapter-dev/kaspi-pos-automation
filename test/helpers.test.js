@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 // Set TOKEN_SECRET_KEY before importing (helpers imports from crypto via config chain)
 process.env.TOKEN_SECRET_KEY = 'a'.repeat(64);
 
-const { generateUUID, nowISO, entranceCookie, extractUserToken } = await import('../src/helpers.js');
+const { generateUUID, nowISO, entranceCookie, extractUserToken, normalizePhone } = await import('../src/helpers.js');
 
 describe('generateUUID', () => {
   it('should return an uppercase UUID', () => {
@@ -76,5 +76,22 @@ describe('extractUserToken', () => {
       },
     };
     assert.equal(extractUserToken(fakeResp), null);
+  });
+});
+
+describe('normalizePhone', () => {
+  it('should keep a 10-digit number as is', () => {
+    assert.equal(normalizePhone('7001234567'), '7001234567');
+  });
+
+  it('should strip the leading country code from 11-digit numbers', () => {
+    assert.equal(normalizePhone('77001234567'), '7001234567');
+    assert.equal(normalizePhone('+7 700 123 45 67'), '7001234567');
+    assert.equal(normalizePhone('8 (700) 123-45-67'), '7001234567');
+  });
+
+  it('should return other inputs as bare digits', () => {
+    assert.equal(normalizePhone('700 123'), '700123');
+    assert.equal(normalizePhone(undefined), '');
   });
 });

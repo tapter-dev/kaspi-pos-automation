@@ -10,7 +10,7 @@ import {
   computeXSign,
   encryptSecret,
 } from '../crypto.js';
-import { loggedFetch, extractUserToken, entranceCookie, generateUUID, nowISO } from '../helpers.js';
+import { loggedFetch, extractUserToken, entranceCookie, generateUUID, nowISO, normalizePhone } from '../helpers.js';
 
 const router = Router();
 
@@ -73,8 +73,14 @@ router.post('/init', async (req, res) => {
 // ═══════════════════════════════════════════════════
 
 router.post('/send-phone', async (req, res) => {
-  const { phoneNumber, processId } = req.body;
-  if (!phoneNumber) return res.status(400).json({ error: 'phoneNumber required (e.g. 7XXXXXXXXX)' });
+  const { processId } = req.body;
+  if (!req.body.phoneNumber) {
+    return res.status(400).json({ error: 'phoneNumber required: 10 digits without country code (e.g. 7001234567)' });
+  }
+  const phoneNumber = normalizePhone(req.body.phoneNumber);
+  if (phoneNumber.length !== 10) {
+    return res.status(400).json({ error: 'phoneNumber must be 10 digits without country code (e.g. 7001234567)' });
+  }
   if (!processId) return res.status(400).json({ error: 'processId required (from /api/auth/init)' });
 
   const session = authSessions.get(processId);
