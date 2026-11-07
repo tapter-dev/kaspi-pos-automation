@@ -31,6 +31,10 @@ Kaspi POS Automation предоставляет REST API для работы с 
   - [POST /api/history/details](#post-apihistorydetails)
 - [Refund — Возвраты](#refund--возвраты)
   - [POST /api/refund/create](#post-apirefundcreate)
+- [Account — Счета и выписки](#account--счета-и-выписки)
+  - [GET /api/account/list](#get-apiaccountlist)
+  - [POST /api/account/statement](#post-apiaccountstatement)
+  - [GET /api/account/statement/export](#get-apiaccountstatementexport)
 - [Session — Проверка сессии](#session--проверка-сессии)
   - [GET /api/session/check](#get-apisessioncheck)
 - [Webhooks — Уведомления](#webhooks--уведомления)
@@ -50,11 +54,11 @@ API использует 3-шаговую SMS-авторизацию. После
 
 Все эндпоинты кроме `/api/auth/*` и `/health` требуют следующие заголовки:
 
-| Заголовок | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `X-Token-SN` | `string` | ✅ | Токен сессии, полученный при авторизации |
-| `X-Vtoken-Secret` | `string` | ✅ | Зашифрованный секрет сессии |
-| `X-Profile-Id` | `string` | ❌ | ID профиля организации |
+| Заголовок         | Тип      | Обязательный | Описание                                 |
+| ----------------- | -------- | ------------ | ---------------------------------------- |
+| `X-Token-SN`      | `string` | ✅           | Токен сессии, полученный при авторизации |
+| `X-Vtoken-Secret` | `string` | ✅           | Зашифрованный секрет сессии              |
+| `X-Profile-Id`    | `string` | ❌           | ID профиля организации                   |
 
 ---
 
@@ -109,10 +113,10 @@ curl -X POST http://localhost:3000/api/auth/init
 
 **Тело запроса:**
 
-| Поле | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `phoneNumber` | `string` | ✅ | Номер телефона кассира: 10 цифр без кода страны, например `7001234567` |
-| `processId` | `string` | ✅ | ID процесса из `/api/auth/init` |
+| Поле          | Тип      | Обязательный | Описание                                                               |
+| ------------- | -------- | ------------ | ---------------------------------------------------------------------- |
+| `phoneNumber` | `string` | ✅           | Номер телефона кассира: 10 цифр без кода страны, например `7001234567` |
+| `processId`   | `string` | ✅           | ID процесса из `/api/auth/init`                                        |
 
 **Пример запроса:**
 
@@ -144,10 +148,10 @@ curl -X POST http://localhost:3000/api/auth/send-phone \
 
 **Тело запроса:**
 
-| Поле | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `otp` | `string` | ✅ | SMS-код |
-| `processId` | `string` | ✅ | ID процесса из `/api/auth/init` |
+| Поле        | Тип      | Обязательный | Описание                        |
+| ----------- | -------- | ------------ | ------------------------------- |
+| `otp`       | `string` | ✅           | SMS-код                         |
+| `processId` | `string` | ✅           | ID процесса из `/api/auth/init` |
 
 **Пример запроса:**
 
@@ -185,9 +189,9 @@ curl -X POST http://localhost:3000/api/auth/verify-otp \
 
 **Тело запроса:**
 
-| Поле | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `tokenSN` | `string` | ❌ | Токен сессии |
+| Поле      | Тип      | Обязательный | Описание     |
+| --------- | -------- | ------------ | ------------ |
+| `tokenSN` | `string` | ❌           | Токен сессии |
 
 **Ответ:**
 
@@ -226,9 +230,9 @@ curl -X POST http://localhost:3000/api/auth/verify-otp \
 
 **Query-параметры:**
 
-| Параметр | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `phoneNumber` | `string` | ✅ | Номер телефона клиента |
+| Параметр      | Тип      | Обязательный | Описание               |
+| ------------- | -------- | ------------ | ---------------------- |
+| `phoneNumber` | `string` | ✅           | Номер телефона клиента |
 
 **Пример запроса:**
 
@@ -247,11 +251,11 @@ curl "http://localhost:3000/api/invoice/client-info?phoneNumber=77001234567" \
 
 **Тело запроса:**
 
-| Поле | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `phoneNumber` | `string` | ✅ | Номер телефона клиента |
-| `amount` | `number` | ✅ | Сумма в тенге |
-| `comment` | `string` | ❌ | Комментарий к платежу |
+| Поле          | Тип      | Обязательный | Описание               |
+| ------------- | -------- | ------------ | ---------------------- |
+| `phoneNumber` | `string` | ✅           | Номер телефона клиента |
+| `amount`      | `number` | ✅           | Сумма в тенге          |
+| `comment`     | `string` | ❌           | Комментарий к платежу  |
 
 **Пример запроса:**
 
@@ -288,9 +292,9 @@ curl -X POST http://localhost:3000/api/invoice/create \
 
 **Query-параметры:**
 
-| Параметр | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `operationId` | `string` | ✅ | ID операции |
+| Параметр      | Тип      | Обязательный | Описание    |
+| ------------- | -------- | ------------ | ----------- |
+| `operationId` | `string` | ✅           | ID операции |
 
 **Пример запроса:**
 
@@ -308,9 +312,9 @@ curl "http://localhost:3000/api/invoice/details?operationId=123456" \
 
 **Тело запроса:**
 
-| Поле | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `operationId` | `string` | ✅ | ID операции для отмены |
+| Поле          | Тип      | Обязательный | Описание               |
+| ------------- | -------- | ------------ | ---------------------- |
+| `operationId` | `string` | ✅           | ID операции для отмены |
 
 **Пример запроса:**
 
@@ -354,11 +358,11 @@ curl -X POST http://localhost:3000/api/invoice/history \
 
 **Тело запроса:**
 
-| Поле | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `amount` | `number` | ✅ | Сумма в тенге |
-| `latitude` | `number` | ❌ | Широта (по умолчанию: Алматы) |
-| `longitude` | `number` | ❌ | Долгота (по умолчанию: Алматы) |
+| Поле        | Тип      | Обязательный | Описание                       |
+| ----------- | -------- | ------------ | ------------------------------ |
+| `amount`    | `number` | ✅           | Сумма в тенге                  |
+| `latitude`  | `number` | ❌           | Широта (по умолчанию: Алматы)  |
+| `longitude` | `number` | ❌           | Долгота (по умолчанию: Алматы) |
 
 **Пример запроса:**
 
@@ -396,9 +400,9 @@ curl -X POST http://localhost:3000/api/qr/create \
 
 **Query-параметры:**
 
-| Параметр | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `qrOperationId` | `string` | ✅ | ID QR-операции из `/api/qr/create` |
+| Параметр        | Тип      | Обязательный | Описание                           |
+| --------------- | -------- | ------------ | ---------------------------------- |
+| `qrOperationId` | `string` | ✅           | ID QR-операции из `/api/qr/create` |
 
 **Пример запроса:**
 
@@ -422,11 +426,11 @@ curl "http://localhost:3000/api/qr/status?qrOperationId=789012" \
 
 **Тело запроса:**
 
-| Поле | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `endDate` | `string` | ✅ | Конечная дата (формат: `YYYY-MM-DD`) |
-| `lastTransactionDate` | `string` | ❌ | Дата последней транзакции (для пагинации) |
-| `statementPeriodCode` | `number` | ❌ | Код периода (по умолчанию: `0`) |
+| Поле                  | Тип      | Обязательный | Описание                                  |
+| --------------------- | -------- | ------------ | ----------------------------------------- |
+| `endDate`             | `string` | ✅           | Конечная дата (формат: `YYYY-MM-DD`)      |
+| `lastTransactionDate` | `string` | ❌           | Дата последней транзакции (для пагинации) |
+| `statementPeriodCode` | `number` | ❌           | Код периода (по умолчанию: `0`)           |
 
 **Пример запроса:**
 
@@ -446,10 +450,10 @@ curl -X POST http://localhost:3000/api/history/operations \
 
 **Тело запроса:**
 
-| Поле | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `id` | `number` | ✅ | ID операции |
-| `operationMethod` | `number` | ❌ | Метод операции (по умолчанию: `0`) |
+| Поле              | Тип      | Обязательный | Описание                           |
+| ----------------- | -------- | ------------ | ---------------------------------- |
+| `id`              | `number` | ✅           | ID операции                        |
+| `operationMethod` | `number` | ❌           | Метод операции (по умолчанию: `0`) |
 
 **Пример запроса:**
 
@@ -475,10 +479,10 @@ curl -X POST http://localhost:3000/api/history/details \
 
 **Тело запроса:**
 
-| Поле | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `qrOperationId` | `number` | ✅ | ID операции для возврата |
-| `returnAmount` | `number` | ✅ | Сумма возврата в тенге |
+| Поле            | Тип      | Обязательный | Описание                 |
+| --------------- | -------- | ------------ | ------------------------ |
+| `qrOperationId` | `number` | ✅           | ID операции для возврата |
+| `returnAmount`  | `number` | ✅           | Сумма возврата в тенге   |
 
 **Пример запроса:**
 
@@ -489,6 +493,145 @@ curl -X POST http://localhost:3000/api/refund/create \
   -H "X-Vtoken-Secret: ..." \
   -d '{"qrOperationId": 789012, "returnAmount": 500}'
 ```
+
+---
+
+## Account — Счета и выписки
+
+Чтение списка счетов организации и выписок по поступлениям (банковские переводы).  
+В отличие от истории операций Kaspi Pay (`/api/history/operations`), сюда попадают **поступления на счёт по платёжным поручениям** от других организаций.
+
+> 🔒 Все эндпоинты требуют [заголовки сессии](#заголовки-сессии).
+
+### `GET /api/account/list`
+
+Получение списка счетов организации.
+
+**Query-параметры:** не требуются
+
+**Пример запроса:**
+
+```bash
+curl "http://localhost:3000/api/account/list" \
+  -H "X-Token-SN: ..." \
+  -H "X-Vtoken-Secret: ..." \
+  -H "X-Profile-Id: ..."
+```
+
+**Успешный ответ:**
+
+```json
+{
+  "StatusCode": 0,
+  "Data": {
+    "Accounts": [
+      {
+        "AccountId": "ACC123",
+        "Iban": "KZ123456789012345678",
+        "Currency": "KZT",
+        "Balance": 1500000,
+        "Name": "Основной счёт"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### `POST /api/account/statement`
+
+Получение выписки по счёту за период.
+
+**Тело запроса:**
+
+| Поле        | Тип      | Обязательный | Описание                                                                                         |
+| ----------- | -------- | ------------ | ------------------------------------------------------------------------------------------------ |
+| `accountId` | `string` | ✅           | ID счёта из `/api/account/list`                                                                  |
+| `dateFrom`  | `string` | ✅           | Начальная дата (формат: `YYYY-MM-DD`)                                                            |
+| `dateTo`    | `string` | ✅           | Конечная дата (формат: `YYYY-MM-DD`)                                                             |
+| `direction` | `string` | ❌           | Направление: `in` (только поступления), `out` (только списания), `all` (все). По умолчанию: `in` |
+| `page`      | `number` | ❌           | Номер страницы (по умолчанию: `0`)                                                               |
+| `size`      | `number` | ❌           | Размер страницы (по умолчанию: `100`, макс. `500`)                                               |
+
+**Пример запроса:**
+
+```bash
+curl -X POST http://localhost:3000/api/account/statement \
+  -H "Content-Type: application/json" \
+  -H "X-Token-SN: ..." \
+  -H "X-Vtoken-Secret: ..." \
+  -H "X-Profile-Id: ..." \
+  -d '{"accountId": "ACC123", "dateFrom": "2025-01-01", "dateTo": "2025-01-31", "direction": "in"}'
+```
+
+**Успешный ответ:**
+
+```json
+{
+  "StatusCode": 0,
+  "Data": {
+    "Statement": [
+      {
+        "OperationId": "OP987654",
+        "Date": "2025-01-15T10:30:00+05:00",
+        "Amount": 500000,
+        "Currency": "KZT",
+        "PayerName": "ТОО «Ромашка»",
+        "PayerBin": "120340005678",
+        "PayerIban": "KZ987654321098765432",
+        "PayerBankBik": "NURSKZKX",
+        "PayerBankName": "АО «Нурбанк»",
+        "Purpose": "Оплата по счёту №123 от 10.01.2025",
+        "Knp": "12345678",
+        "Kbe": "KBE001",
+        "DocumentNumber": "DOC-2025-001234"
+      }
+    ],
+    "TotalCount": 1,
+    "Page": 0,
+    "Size": 100
+  }
+}
+```
+
+**Важные поля для сверки:**
+
+- `OperationId` — уникальный идентификатор операции (чтобы не учесть дважды)
+- `Date` — дата и время операции
+- `Amount` — сумма в тенге
+- `PayerName` / `PayerBin` — наименование и БИН/ИИН плательщика
+- `PayerIban` / `PayerBankBik` — ИИК и БИК банка плательщика
+- `Purpose` — назначение платежа (обычно содержит номер счёта)
+- `Knp` / `Kbe` — код налогового платежа и КБе
+- `DocumentNumber` — номер платёжного документа
+
+---
+
+### `GET /api/account/statement/export`
+
+Выгрузка выписки в формате 1С (`1CClientBankExchange`).
+
+**Query-параметры:**
+
+| Параметр    | Тип      | Обязательный | Описание                      |
+| ----------- | -------- | ------------ | ----------------------------- |
+| `accountId` | `string` | ✅           | ID счёта                      |
+| `dateFrom`  | `string` | ✅           | Начальная дата (`YYYY-MM-DD`) |
+| `dateTo`    | `string` | ✅           | Конечная дата (`YYYY-MM-DD`)  |
+| `format`    | `string` | ✅           | Формат экспорта: `1c`         |
+
+**Пример запроса:**
+
+```bash
+curl "http://localhost:3000/api/account/statement/export?accountId=ACC123&dateFrom=2025-01-01&dateTo=2025-01-31&format=1c" \
+  -H "X-Token-SN: ..." \
+  -H "X-Vtoken-Secret: ..." \
+  -H "X-Profile-Id: ..." \
+  --output statement_1c.txt
+```
+
+**Ответ:** текстовый файл в кодировке Windows-1251, формат 1CClientBankExchange.
 
 ---
 
@@ -535,11 +678,11 @@ curl "http://localhost:3000/api/session/check" \
 { "error": "Описание ошибки" }
 ```
 
-| HTTP-код | Описание |
-|---|---|
-| `400` | Отсутствуют обязательные параметры или параметр имеет неверный формат |
-| `401` | Отсутствуют или невалидные заголовки сессии |
-| `500` | Внутренняя ошибка сервера или ошибка Kaspi API |
+| HTTP-код | Описание                                                              |
+| -------- | --------------------------------------------------------------------- |
+| `400`    | Отсутствуют обязательные параметры или параметр имеет неверный формат |
+| `401`    | Отсутствуют или невалидные заголовки сессии                           |
+| `500`    | Внутренняя ошибка сервера или ошибка Kaspi API                        |
 
 ---
 
@@ -561,11 +704,11 @@ curl "http://localhost:3000/api/session/check" \
 ]
 ```
 
-| Поле | Тип | Обязательный | Описание |
-|---|---|---|---|
-| `url` | `string` | ✅ | URL, на который будут отправляться уведомления |
-| `events` | `string[]` | ✅ | Список событий для подписки |
-| `secret` | `string` | ❌ | Секрет для HMAC-подписи (рекомендуется) |
+| Поле     | Тип        | Обязательный | Описание                                       |
+| -------- | ---------- | ------------ | ---------------------------------------------- |
+| `url`    | `string`   | ✅           | URL, на который будут отправляться уведомления |
+| `events` | `string[]` | ✅           | Список событий для подписки                    |
+| `secret` | `string`   | ❌           | Секрет для HMAC-подписи (рекомендуется)        |
 
 > 💡 Для начала скопируйте `webhooks.example.json` → `webhooks.json` и отредактируйте.
 
@@ -588,12 +731,12 @@ curl "http://localhost:3000/api/session/check" \
 
 ### События
 
-| Событие | Описание | Когда срабатывает |
-|---|---|---|
-| `payment.success` | Платёж успешно проведён | QR: статус `Processed`; Invoice: статус `Processed` |
-| `payment.failed` | Платёж отклонён / отменён | QR: `CancelledByUser`, `Rejected`, `Error` и др.; Invoice: `RemotePaymentCanceled`, `RemotePaymentRejected` |
-| `payment.expired` | Время оплаты истекло | QR: `QrTokenDiscarded`, `Expired`; Invoice: `Expired` |
-| `payment.lost` | Статус платежа неизвестен — требуется ручная проверка | Сессия Kaspi вытеснена (`SessionExpired`) или исчерпаны попытки опроса (`PollingFailed`) |
+| Событие           | Описание                                              | Когда срабатывает                                                                                           |
+| ----------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `payment.success` | Платёж успешно проведён                               | QR: статус `Processed`; Invoice: статус `Processed`                                                         |
+| `payment.failed`  | Платёж отклонён / отменён                             | QR: `CancelledByUser`, `Rejected`, `Error` и др.; Invoice: `RemotePaymentCanceled`, `RemotePaymentRejected` |
+| `payment.expired` | Время оплаты истекло                                  | QR: `QrTokenDiscarded`, `Expired`; Invoice: `Expired`                                                       |
+| `payment.lost`    | Статус платежа неизвестен — требуется ручная проверка | Сессия Kaspi вытеснена (`SessionExpired`) или исчерпаны попытки опроса (`PollingFailed`)                    |
 
 ### Формат payload
 
@@ -615,19 +758,19 @@ curl "http://localhost:3000/api/session/check" \
 }
 ```
 
-| Поле | Тип | Описание |
-|---|---|---|
-| `event` | `string` | Название события (`payment.success`, `payment.failed`, `payment.expired`, `payment.lost`) |
-| `paymentId` | `string` | ID платежа (QR operationId или invoice operationId) |
-| `type` | `string` | Тип платежа: `qr` или `invoice` |
-| `status` | `string` | Финальный статус от Kaspi API |
-| `statusDesc` | `string` | Описание статуса |
-| `amount` | `number\|null` | Сумма платежа в тенге |
-| `qrToken` | `string\|null` | QR-токен (только для QR-платежей) |
-| `receiptUrl` | `string\|null` | Ссылка на чек |
-| `orderNumber` | `string\|null` | Номер заказа |
-| `data` | `object` | Полные данные ответа от Kaspi API |
-| `timestamp` | `string` | Время отправки уведомления (ISO 8601) |
+| Поле          | Тип            | Описание                                                                                  |
+| ------------- | -------------- | ----------------------------------------------------------------------------------------- |
+| `event`       | `string`       | Название события (`payment.success`, `payment.failed`, `payment.expired`, `payment.lost`) |
+| `paymentId`   | `string`       | ID платежа (QR operationId или invoice operationId)                                       |
+| `type`        | `string`       | Тип платежа: `qr` или `invoice`                                                           |
+| `status`      | `string`       | Финальный статус от Kaspi API                                                             |
+| `statusDesc`  | `string`       | Описание статуса                                                                          |
+| `amount`      | `number\|null` | Сумма платежа в тенге                                                                     |
+| `qrToken`     | `string\|null` | QR-токен (только для QR-платежей)                                                         |
+| `receiptUrl`  | `string\|null` | Ссылка на чек                                                                             |
+| `orderNumber` | `string\|null` | Номер заказа                                                                              |
+| `data`        | `object`       | Полные данные ответа от Kaspi API                                                         |
+| `timestamp`   | `string`       | Время отправки уведомления (ISO 8601)                                                     |
 
 ### Подпись (HMAC)
 
@@ -643,14 +786,8 @@ X-Webhook-Signature: sha256=<hex-digest>
 import crypto from 'crypto';
 
 const verifySignature = (body, signature, secret) => {
-  const expected = 'sha256=' + crypto
-    .createHmac('sha256', secret)
-    .update(body)
-    .digest('hex');
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expected)
-  );
+  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(body).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
 };
 
 // В обработчике запроса:
@@ -665,11 +802,11 @@ if (!verifySignature(rawBody, sig, 'your-webhook-secret')) {
 
 Если доставка вебхука не удалась (ошибка сети, таймаут, HTTP-ошибка), система выполняет до **3 попыток** с нарастающей задержкой:
 
-| Попытка | Задержка |
-|---|---|
+| Попытка      | Задержка   |
+| ------------ | ---------- |
 | 1-я (первая) | Немедленно |
-| 2-я | 5 секунд |
-| 3-я | 30 секунд |
+| 2-я          | 5 секунд   |
+| 3-я          | 30 секунд  |
 
 - Таймаут запроса: **10 секунд**.
 - Очередь повторных попыток сохраняется в `webhook-retries.json` и переживает перезапуск сервера.
